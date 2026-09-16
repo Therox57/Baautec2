@@ -1,0 +1,3 @@
+For full Lovable independence, place the exact official logo here as:
+public/baau-tec-official.png
+Then set VITE_TEC_LOGO_URL=/baau-tec-official.png
