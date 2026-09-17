@@ -39,7 +39,7 @@ type Member = {
   privacy_accepted: boolean
 }
 
-type Errors = Partial<Record<'firstName'|'lastName'|'fatherName'|'birth'|'gender'|'phone'|'email'|'faculty'|'specialty'|'course'|'reason'|'languages'|'privacy', string>>
+type Errors = Partial<Record<'firstName'|'lastName'|'fatherName'|'birth'|'gender'|'phone'|'email'|'faculty'|'specialty'|'course'|'reason'|'languages'|'skills'|'privacy', string>>
 
 export function App() {
   const path = window.location.pathname.replace(/\/+$/, '') || '/'
@@ -155,6 +155,7 @@ function MembershipPage() {
     if (selectedLangs.length === 0) e.languages = 'Ən azı bir dil seçin.'
     selectedLangs.forEach(l => { if (!langLevels[l]) e.languages = 'Hər seçilmiş dil üçün səviyyəni göstərin.' })
     if (selectedLangs.includes('Digər') && otherLang.trim().length < 2) e.languages = 'Digər dilin adını yazın.'
+    if (!skills.trim()) e.skills = 'Xüsusi qabiliyyət və bacarıqlarınızı qeyd edin.'
     if (!privacy) e.privacy = 'Davam etmək üçün razılıq verməlisiniz.'
     return e
   }
@@ -207,7 +208,7 @@ function MembershipPage() {
         <section className="card section-card"><h2>Motivasiya və bacarıqlar</h2>
           <div data-error={!!errors.reason}><Field label="Niyə Tələbə Elmi Cəmiyyətinə üzv olmaq istəyirsiniz?" required error={errors.reason}><textarea className="control textarea tall" value={reason} onChange={e=>setReason(e.target.value)}/></Field></div>
           <div data-error={!!errors.languages}><Field label="Bildiyiniz xarici dil" required error={errors.languages} hint="Bir neçə dil seçə bilərsiniz."><div className="lang-list">{LANGUAGES.map(lang=>{const active=selectedLangs.includes(lang); return <div className={`lang-card ${active?'active':''}`} key={lang}><label className="check-row"><input type="checkbox" checked={active} onChange={()=>toggleLang(lang)}/><span>{lang}</span></label>{active?<div className="lang-extra">{lang==='Digər'?<input className="control" placeholder="Dilin adı" value={otherLang} onChange={e=>setOtherLang(e.target.value)}/>:null}<select className="control" value={langLevels[lang]??''} onChange={e=>setLangLevels(p=>({...p,[lang]:e.target.value}))}><option value="">Dil səviyyəsi</option>{LEVELS.map(lv=><option key={lv}>{lv}</option>)}</select></div>:null}</div>})}</div></Field></div>
-          <Field label="Xüsusi qabiliyyət və bacarıqlar"><textarea className="control textarea" value={skills} onChange={e=>setSkills(e.target.value)}/></Field>
+          <div data-error={!!errors.skills}><Field label="Xüsusi qabiliyyət və bacarıqlar" required error={errors.skills}><textarea className="control textarea" value={skills} onChange={e=>setSkills(e.target.value)}/></Field></div>
           <Field label="Əlavə qeyd" hint="Məcburi deyil."><textarea className="control textarea" value={note} onChange={e=>setNote(e.target.value)}/></Field>
         </section>
         <section className="card section-card privacy-card"><div data-error={!!errors.privacy}><label className="check-row privacy-check"><input type="checkbox" checked={privacy} onChange={e=>setPrivacy(e.target.checked)}/><span>Şəxsi məlumatlarımın Tələbə Elmi Cəmiyyəti tərəfindən üzvlük və təşkilati məqsədlər üçün işlənməsinə razılıq verirəm.</span></label>{errors.privacy?<p className="field-error">{errors.privacy}</p>:null}</div><button type="button" className="link-btn" onClick={()=>setPrivacyOpen(true)}>Məxfilik haqqında</button>{submitError?<p className="submit-error">{submitError}</p>:null}<button className="primary-btn" type="submit" disabled={submitting}>{submitting?<Loader2 className="spin" size={20}/>:null}{submitting?'Göndərilir...':'Göndər'}</button></section>
