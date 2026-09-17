@@ -252,6 +252,153 @@ function AdminLogin(){
 
 function Unauthorized({email}:{email:string}){return <main className="center-page"><div className="card login-card center-text"><ShieldCheck className="muted"/><h1>Giriş icazəsi yoxdur</h1><p className="muted">{email} hesabına administrator səlahiyyəti verilməyib.</p><button className="primary-btn" onClick={()=>supabase.auth.signOut()}><LogOut size={18}/> Çıxış</button></div></main>}
 
+
+function AddAdminCard(){
+  const [email,setEmail] = useState('')
+  const [password,setPassword] = useState('')
+  const [loading,setLoading] = useState(false)
+  const [message,setMessage] = useState('')
+  const [error,setError] = useState('')
+
+  async function createAdmin(){
+    const cleanEmail = email.trim().toLowerCase()
+    setMessage('')
+    setError('')
+
+    if(!cleanEmail){
+      setError('E-poçt daxil et.')
+      return
+    }
+
+    if(password.length < 8){
+      setError('Şifrə ən azı 8 simvol olmalıdır.')
+      return
+    }
+
+    setLoading(true)
+
+    try{
+      const { data: prep, error: prepError } = await supabase.rpc(
+        'prepare_admin_invite',
+        { _email: cleanEmail }
+      )
+
+      if(prepError) throw prepError
+
+      const payload = prep as { status?: string; token?: string } | null
+
+      if(payload?.status === 'existing_granted'){
+        setMessage('Bu hesab artıq mövcud idi. Admin səlahiyyəti verildi.')
+        setEmail('')
+        setPassword('')
+        return
+      }
+
+      if(payload?.status !== 'invite_created' || !payload.token){
+        throw new Error('Admin dəvəti yaradıla bilmədi.')
+      }
+
+      const { createClient } = await import('@supabase/supabase-js')
+
+      const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
+      const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined
+
+      if(!url || !key){
+        throw new Error('Supabase bağlantı məlumatları tapılmadı.')
+      }
+
+      const secondary = createClient(url,key,{
+        auth:{
+          persistSession:false,
+          autoRefreshToken:false,
+          detectSessionInUrl:false
+        }
+      })
+
+      const { data: signUpData, error: signUpError } = await secondary.auth.signUp({
+        email:cleanEmail,
+        password,
+        options:{
+          data:{
+            admin_invite_token:payload.token
+          }
+        }
+      })
+
+      if(signUpError) throw signUpError
+
+      if(!signUpData.user){
+        throw new Error('Admin hesabı yaradıla bilmədi.')
+      }
+
+      if(signUpData.session){
+        setMessage('Yeni admin uğurla yaradıldı. Artıq admin panelə daxil ola bilər.')
+      }else{
+        setMessage('Yeni admin yaradıldı. E-poçt təsdiqi aktivdirsə, həmin şəxs gələn təsdiq linkini açmalıdır.')
+      }
+
+      setEmail('')
+      setPassword('')
+    }catch(err){
+      setError(err instanceof Error ? err.message : 'Xəta baş verdi.')
+    }finally{
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="card add-admin-card">
+      <div className="add-admin-head">
+        <h2>Yeni admin əlavə et</h2>
+        <p className="muted">Yeni administrator üçün e-poçt və ilkin şifrə təyin et.</p>
+      </div>
+
+      <form
+        className="add-admin-grid"
+        onSubmit={e=>{
+          e.preventDefault()
+          void createAdmin()
+        }}
+      >
+        <label>
+          <span>E-poçt</span>
+          <input
+            className="control"
+            type="email"
+            value={email}
+            onChange={e=>setEmail(e.target.value)}
+            placeholder="admin@example.com"
+            autoComplete="off"
+            required
+          />
+        </label>
+
+        <label>
+          <span>İlkin şifrə</span>
+          <input
+            className="control"
+            type="password"
+            value={password}
+            onChange={e=>setPassword(e.target.value)}
+            placeholder="Minimum 8 simvol"
+            autoComplete="new-password"
+            required
+          />
+        </label>
+
+        <button className="primary-btn" disabled={loading}>
+          {loading ? <Loader2 className="spin" size={18}/> : null}
+          Admin əlavə et
+        </button>
+      </form>
+
+      {message ? <p className="admin-success">{message}</p> : null}
+      {error ? <p className="field-error">{error}</p> : null}
+    </div>
+  )
+}
+
+
 function AdminDashboard({email}:{email:string}){
   const [rows,setRows]=useState<Member[]>([]); const [loading,setLoading]=useState(true); const [loadError,setLoadError]=useState(''); const [search,setSearch]=useState(''); const [faculty,setFaculty]=useState(''); const [specialty,setSpecialty]=useState(''); const [course,setCourse]=useState(''); const [sort,setSort]=useState<'new'|'old'>('new'); const [page,setPage]=useState(1); const [selected,setSelected]=useState<Member|null>(null)
   async function load(){setLoading(true);setLoadError(''); const {data,error}=await supabase.from('tec_members').select('*').order('created_at',{ascending:false}); if(error){console.error(error);setLoadError('Məlumatlara giriş icazəniz yoxdur və ya xəta baş verdi.');setRows([])}else setRows((data??[]) as Member[]);setLoading(false)}
@@ -263,6 +410,7 @@ function AdminDashboard({email}:{email:string}){
   function exportCsv(){const headers=['Ad','Soyad','Ata adı','Doğum tarixi','Cins','Telefon','E-poçt','Fakültə','İxtisas','Kurs','Motivasiya','Dillər','Bacarıqlar','Əlavə qeyd','Qeydiyyat tarixi']; const lines=filtered.map(r=>[r.first_name,r.last_name,r.father_name,r.birth_date,r.gender,r.phone,r.email,r.faculty,r.specialty,r.course,r.membership_reason,(r.languages??[]).map(l=>`${l.language} (${l.level})`).join('; '),r.skills??'',r.additional_note??'',formatDate(r.created_at)].map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')); const url=URL.createObjectURL(new Blob(['\uFEFF'+[headers.join(','),...lines].join('\n')],{type:'text/csv;charset=utf-8'})); const a=document.createElement('a');a.href=url;a.download=`tec-qeydiyyatlar-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(url)}
   return <main className="page admin-page"><header className="site-header admin-header"><div className="content wide header-row"><div><h1>TEC İdarəetmə Paneli</h1><p>{email}</p></div><div className="header-actions"><button className="ghost-light" onClick={()=>void load()}>Yenilə</button><button className="ghost-light" onClick={()=>supabase.auth.signOut()}><LogOut size={16}/> Çıxış</button></div></div></header>
     <div className="content wide admin-content">{loadError?<div className="card alert-error">{loadError}</div>:null}<div className="stats-grid">{[['Ümumi qeydiyyat sayı',rows.length],['Bu gün qeydiyyatdan keçənlər',todayCount],['Bu həftə qeydiyyatdan keçənlər',weekCount]].map(([label,value])=><div className="card stat" key={String(label)}><p>{label}</p><strong>{value}</strong></div>)}</div>
+      <AddAdminCard />
       <div className="card filters"><div className="search-wrap"><Search size={18}/><input className="control" placeholder="Ad və ya soyad üzrə axtarış" value={search} onChange={e=>{setSearch(e.target.value);setPage(1)}}/></div><div className="filter-grid"><select className="control" value={faculty} onChange={e=>{setFaculty(e.target.value);setPage(1)}}><option value="">Bütün fakültələr</option>{faculties.map(x=><option key={x}>{x}</option>)}</select><select className="control" value={specialty} onChange={e=>{setSpecialty(e.target.value);setPage(1)}}><option value="">Bütün ixtisaslar</option>{specialties.map(x=><option key={x}>{x}</option>)}</select><select className="control" value={course} onChange={e=>{setCourse(e.target.value);setPage(1)}}><option value="">Bütün kurslar</option>{courses.map(x=><option key={x}>{x}</option>)}</select><select className="control" value={sort} onChange={e=>setSort(e.target.value as 'new'|'old')}><option value="new">Əvvəlcə yenilər</option><option value="old">Əvvəlcə köhnələr</option></select></div><button className="outline-btn" onClick={exportCsv}><Download size={16}/> CSV olaraq yüklə</button></div>
       <div className="card records">{loading?<div className="loading-box"><Loader2 className="spin"/></div>:filtered.length===0?<div className="empty">Qeydiyyat tapılmadı.</div>:<><div className="mobile-cards">{pageRows.map(r=><button key={r.id} className="member-card" onClick={()=>setSelected(r)}><div className="member-top"><strong>{r.first_name} {r.last_name}</strong><span>{r.course}</span></div><p>{r.faculty}</p><p>{r.specialty}</p><div className="member-meta"><span>{r.phone}</span><span>{formatDate(r.created_at)}</span></div></button>)}</div><div className="desktop-table-wrap"><table><thead><tr><th>Ad Soyad</th><th>Fakültə</th><th>İxtisas</th><th>Kurs</th><th>Telefon</th><th>E-poçt</th><th>Qeydiyyat tarixi</th></tr></thead><tbody>{pageRows.map(r=><tr key={r.id} onClick={()=>setSelected(r)}><td><strong>{r.first_name} {r.last_name}</strong></td><td>{r.faculty}</td><td>{r.specialty}</td><td>{r.course}</td><td>{r.phone}</td><td>{r.email}</td><td>{formatDate(r.created_at)}</td></tr>)}</tbody></table></div></>}</div>
       {totalPages>1?<div className="pager"><button className="outline-btn" disabled={currentPage===1} onClick={()=>setPage(currentPage-1)}>Əvvəlki</button><span>{currentPage} / {totalPages}</span><button className="outline-btn" disabled={currentPage===totalPages} onClick={()=>setPage(currentPage+1)}>Növbəti</button></div>:null}
