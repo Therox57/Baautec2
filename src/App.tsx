@@ -89,8 +89,7 @@ function PrivacyContent() {
 
 function Intro({ onDone }: { onDone: () => void }) {
   useEffect(() => {
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const id = window.setTimeout(onDone, reduced ? 120 : 2500)
+    const id = window.setTimeout(onDone, 2500)
     return () => window.clearTimeout(id)
   }, [onDone])
   return <div className="intro-screen" aria-label="TEC açılış ekranı">

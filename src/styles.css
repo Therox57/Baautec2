@@ -166,3 +166,46 @@
     animation-delay:0ms!important;
   }
 }
+
+/* Force TEC intro to remain visible even when OS reduced-motion is enabled */
+@media (prefers-reduced-motion: reduce){
+  .intro-screen{
+    animation-duration:.5s!important;
+    animation-delay:2s!important;
+  }
+
+  .intro-screen::before{
+    animation-duration:1.55s!important;
+    animation-delay:.35s!important;
+  }
+
+  .intro-glow{
+    animation-duration:2s!important;
+    animation-delay:0s!important;
+  }
+
+  .intro-logo-wrap{
+    animation-duration:.95s!important;
+    animation-delay:0s!important;
+  }
+
+  .intro-logo{
+    animation-duration:1.15s!important;
+    animation-delay:0s!important;
+  }
+
+  .intro-line{
+    animation-duration:1s!important;
+    animation-delay:.38s!important;
+  }
+
+  .intro-logo-wrap p{
+    animation-duration:.65s!important;
+    animation-delay:.62s!important;
+  }
+
+  .intro-logo-wrap span{
+    animation-duration:.65s!important;
+    animation-delay:.78s!important;
+  }
+}
