@@ -261,89 +261,24 @@ function AddAdminCard(){
   const [error,setError] = useState('')
 
   async function createAdmin(){
-    const cleanEmail = email.trim().toLowerCase()
-    setMessage('')
-    setError('')
-
-    if(!cleanEmail){
-      setError('E-poçt daxil et.')
-      return
-    }
-
-    if(password.length < 8){
-      setError('Şifrə ən azı 8 simvol olmalıdır.')
-      return
-    }
-
+    const cleanEmail=email.trim().toLowerCase()
+    setMessage("")
+    setError("")
+    if(!cleanEmail){setError("E-poçt daxil et.");return}
+    if(password.length<8){setError("Şifrə ən azı 8 simvol olmalıdır.");return}
     setLoading(true)
-
     try{
-      const { data: prep, error: prepError } = await supabase.rpc(
-        'prepare_admin_invite',
-        { _email: cleanEmail }
-      )
-
-      if(prepError) throw prepError
-
-      const payload = prep as { status?: string; token?: string } | null
-
-      if(payload?.status === 'existing_granted'){
-        setMessage('Bu hesab artıq mövcud idi. Admin səlahiyyəti verildi.')
-        setEmail('')
-        setPassword('')
-        return
-      }
-
-      if(payload?.status !== 'invite_created' || !payload.token){
-        throw new Error('Admin dəvəti yaradıla bilmədi.')
-      }
-
-      const { createClient } = await import('@supabase/supabase-js')
-
-      const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
-      const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined
-
-      if(!url || !key){
-        throw new Error('Supabase bağlantı məlumatları tapılmadı.')
-      }
-
-      const secondary = createClient(url,key,{
-        auth:{
-          persistSession:false,
-          autoRefreshToken:false,
-          detectSessionInUrl:false
-        }
-      })
-
-      const { data: signUpData, error: signUpError } = await secondary.auth.signUp({
-        email:cleanEmail,
-        password,
-        options:{
-          data:{
-            admin_invite_token:payload.token
-          }
-        }
-      })
-
-      if(signUpError) throw signUpError
-
-      if(!signUpData.user){
-        throw new Error('Admin hesabı yaradıla bilmədi.')
-      }
-
-      if(signUpData.session){
-        setMessage('Yeni admin uğurla yaradıldı. Artıq admin panelə daxil ola bilər.')
-      }else{
-        setMessage('Yeni admin yaradıldı. E-poçt təsdiqi aktivdirsə, həmin şəxs gələn təsdiq linkini açmalıdır.')
-      }
-
-      setEmail('')
-      setPassword('')
-    }catch(err){
-      setError(err instanceof Error ? err.message : 'Xəta baş verdi.')
-    }finally{
-      setLoading(false)
-    }
+      const {data}=await supabase.auth.getSession()
+      const token=data.session?.access_token
+      if(!token) throw new Error("Admin sessiyası tapılmadı. Yenidən daxil ol.")
+      const res=await fetch("https://tec-qeydiyyat-portal.lovable.app/api/public/create-admin",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({email:cleanEmail,password})})
+      const result=await res.json().catch(()=>({})) as {success?:boolean;message?:string;error?:string}
+      if(!res.ok||!result.success) throw new Error(result.error||"Admin hesabı yaradıla bilmədi.")
+      setMessage(result.message||"Yeni admin uğurla yaradıldı.")
+      setEmail("")
+      setPassword("")
+    }catch(err){setError(err instanceof Error?err.message:"Xəta baş verdi.")}
+    finally{setLoading(false)}
   }
 
   return (
