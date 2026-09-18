@@ -10,6 +10,8 @@ import {
   X,
 } from 'lucide-react'
 import { supabase } from './supabase'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 const MONTHS = ['Yanvar','Fevral','Mart','Aprel','May','İyun','İyul','Avqust','Sentyabr','Oktyabr','Noyabr','Dekabr']
 const COURSES = ['1-ci kurs','2-ci kurs','3-cü kurs','4-cü kurs','Magistr 1','Magistr 2']
@@ -257,7 +259,7 @@ function TecGPTBetaPage(){
 }
 
 function TecGPTBeta({email}:{email:string}){
-  const firstMessage='Salam! Mən TECGPT-yəm. BAAU TEC, üzvlük, tədbirlər və tələbə elmi fəaliyyəti ilə bağlı köməkçi kimi hazırlanacağam. Hazırda yalnız beta interfeysi test olunur.'
+  const firstMessage='Salam! Mən **TECGPT**-yəm 👋 BAAU, TEC, üzvlük, fakültələr, ixtisaslar, tələbə həyatı və elmi fəaliyyətlərlə bağlı suallarını cavablandıra bilərəm. Hazırda **beta test rejimindəyəm**.'
   const [messages,setMessages]=useState<TecGPTMessage[]>([{id:1,role:'assistant',text:firstMessage}])
   const [input,setInput]=useState('')
   const [typing,setTyping]=useState(false)
@@ -374,7 +376,15 @@ function TecGPTBeta({email}:{email:string}){
         <div className="tecgpt-messages">
           {messages.map(m=><div key={m.id} className={`tecgpt-message ${m.role}`}>
             <div className="tecgpt-avatar">{m.role==='assistant'?'T':'S'}</div>
-            <div className="tecgpt-bubble">{m.text}</div>
+            <div className="tecgpt-bubble">
+              {m.role === 'assistant' ? (
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {m.text}
+                </ReactMarkdown>
+              ) : (
+                m.text
+              )}
+            </div>
           </div>)}
           {typing?<div className="tecgpt-message assistant"><div className="tecgpt-avatar">T</div><div className="tecgpt-bubble tecgpt-typing"><i/><i/><i/></div></div>:null}
         </div>
