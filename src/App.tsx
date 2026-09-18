@@ -226,122 +226,362 @@ function formatDate(value: string) {
   return new Date(value).toLocaleString('az-AZ',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})
 }
 
-type TecGPTMessage = { id: number; role: 'assistant' | 'user'; text: string }
+type TecGPTMessage = {
+  id: string
+  role: 'assistant' | 'user'
+  text: string
+  created_at?: string
+}
+
+type TecGPTChat = {
+  id: string
+  title: string
+  created_at: string
+  updated_at: string
+}
 
 function TecGPTBetaPage(){
   const [checking,setChecking]=useState(true)
   const [userEmail,setUserEmail]=useState<string|null>(null)
+  const [userId,setUserId]=useState<string|null>(null)
   const [isAdmin,setIsAdmin]=useState(false)
 
   useEffect(()=>{
     let active=true
+
     async function check(){
       setChecking(true)
+
       const {data}=await supabase.auth.getUser()
       if(!active)return
+
       const user=data.user
-      if(!user){setUserEmail(null);setIsAdmin(false);setChecking(false);return}
-      const {data:role}=await supabase.from('user_roles').select('role').eq('user_id',user.id).eq('role','admin').maybeSingle()
+
+      if(!user){
+        setUserEmail(null)
+        setUserId(null)
+        setIsAdmin(false)
+        setChecking(false)
+        return
+      }
+
+      const {data:role}=await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id',user.id)
+        .eq('role','admin')
+        .maybeSingle()
+
       if(!active)return
+
       setUserEmail(user.email??null)
+      setUserId(user.id)
       setIsAdmin(role?.role==='admin')
       setChecking(false)
     }
+
     void check()
+
     const {data:sub}=supabase.auth.onAuthStateChange(()=>void check())
-    return()=>{active=false;sub.subscription.unsubscribe()}
+
+    return()=>{
+      active=false
+      sub.subscription.unsubscribe()
+    }
   },[])
 
   if(checking)return <div className="center-page"><Loader2 className="spin muted"/></div>
-  if(!userEmail)return <AdminLogin/>
+  if(!userEmail||!userId)return <AdminLogin/>
   if(!isAdmin)return <Unauthorized email={userEmail}/>
-  return <TecGPTBeta email={userEmail}/>
+
+  return <TecGPTBeta email={userEmail} userId={userId}/>
 }
 
-function TecGPTBeta({email}:{email:string}){
+function TecGPTBeta({email,userId}:{email:string;userId:string}){
   const firstMessage='Salam! Mən **TECGPT**-yəm 👋 BAAU, TEC, üzvlük, fakültələr, ixtisaslar, tələbə həyatı və elmi fəaliyyətlərlə bağlı suallarını cavablandıra bilərəm. Hazırda **beta test rejimindəyəm**.'
-  const [messages,setMessages]=useState<TecGPTMessage[]>([{id:1,role:'assistant',text:firstMessage}])
+
+  const makeWelcome=():TecGPTMessage=>({
+    id:'welcome',
+    role:'assistant',
+    text:firstMessage,
+  })
+
+  const [chats,setChats]=useState<TecGPTChat[]>([])
+  const [activeChatId,setActiveChatId]=useState<string|null>(null)
+  const [messages,setMessages]=useState<TecGPTMessage[]>([makeWelcome()])
   const [input,setInput]=useState('')
   const [typing,setTyping]=useState(false)
-  const quick=['TEC nədir?','TEC-ə necə üzv olum?','Tədbirlər haqqında məlumat','Üzvlüyün üstünlükləri']
+  const [loadingHistory,setLoadingHistory]=useState(true)
 
-  function newChat(){
-    setMessages([{id:Date.now(),role:'assistant',text:firstMessage}])
-    setInput('')
-    setTyping(false)
+  const quick=[
+    'TEC nədir?',
+    'TEC-ə necə üzv olum?',
+    'Tədbirlər haqqında məlumat',
+    'Üzvlüyün üstünlükləri',
+  ]
+
+  useEffect(()=>{
+    void loadChats()
+  },[userId])
+
+  function makeTitle(value:string){
+    const clean=value.replace(/\s+/g,' ').trim()
+    return clean.length>42 ? `${clean.slice(0,42)}…` : clean || 'Yeni söhbət'
   }
 
-    async function send(text?: string) {
-    const value = (text ?? input).trim()
+  async function loadChats(){
+    setLoadingHistory(true)
 
-    if (!value || typing) return
+    const {data,error}=await supabase
+      .from('tecgpt_chats')
+      .select('id,title,created_at,updated_at')
+      .order('updated_at',{ascending:false})
 
-    const userMessage: TecGPTMessage = {
-      id: Date.now(),
-      role: 'user',
-      text: value,
+    if(error){
+      console.error(error)
+      setChats([])
+      setActiveChatId(null)
+      setMessages([makeWelcome()])
+      setLoadingHistory(false)
+      return
     }
 
-    const outgoingMessages = [...messages, userMessage]
+    const loaded=(data??[]) as TecGPTChat[]
+    setChats(loaded)
+
+    if(loaded.length){
+      await loadChat(loaded[0].id)
+    }else{
+      setActiveChatId(null)
+      setMessages([makeWelcome()])
+    }
+
+    setLoadingHistory(false)
+  }
+
+  async function loadChat(chatId:string){
+    const {data,error}=await supabase
+      .from('tecgpt_messages')
+      .select('id,role,content,created_at')
+      .eq('chat_id',chatId)
+      .order('created_at',{ascending:true})
+
+    if(error){
+      console.error(error)
+      return
+    }
+
+    const loaded:TecGPTMessage[]=(data??[]).map(row=>({
+      id:String(row.id),
+      role:row.role==='user'?'user':'assistant',
+      text:String(row.content??''),
+      created_at:row.created_at ? String(row.created_at) : undefined,
+    }))
+
+    setActiveChatId(chatId)
+    setMessages([makeWelcome(),...loaded])
+    setInput('')
+  }
+
+  async function openChat(chatId:string){
+    if(typing||chatId===activeChatId)return
+    await loadChat(chatId)
+  }
+
+  function newChat(){
+    if(typing)return
+    setActiveChatId(null)
+    setMessages([makeWelcome()])
+    setInput('')
+  }
+
+  async function createChat(firstUserMessage:string){
+    const {data,error}=await supabase
+      .from('tecgpt_chats')
+      .insert({
+        user_id:userId,
+        title:makeTitle(firstUserMessage),
+      })
+      .select('id,title,created_at,updated_at')
+      .single()
+
+    if(error||!data){
+      throw new Error(error?.message||'Yeni söhbət yaradıla bilmədi.')
+    }
+
+    const chat=data as TecGPTChat
+
+    setChats(prev=>[
+      chat,
+      ...prev.filter(item=>item.id!==chat.id),
+    ])
+
+    setActiveChatId(chat.id)
+
+    return chat.id
+  }
+
+  async function saveMessage(
+    chatId:string,
+    role:'user'|'assistant',
+    content:string,
+  ){
+    const {error}=await supabase
+      .from('tecgpt_messages')
+      .insert({
+        chat_id:chatId,
+        role,
+        content,
+      })
+
+    if(error)throw new Error(error.message)
+  }
+
+  async function touchChat(chatId:string){
+    const now=new Date().toISOString()
+
+    const {error}=await supabase
+      .from('tecgpt_chats')
+      .update({updated_at:now})
+      .eq('id',chatId)
+
+    if(error){
+      console.error(error)
+      return
+    }
+
+    setChats(prev=>
+      prev
+        .map(chat=>chat.id===chatId?{...chat,updated_at:now}:chat)
+        .sort((a,b)=>new Date(b.updated_at).getTime()-new Date(a.updated_at).getTime())
+    )
+  }
+
+  async function deleteChat(chatId:string){
+    if(typing)return
+
+    const chat=chats.find(item=>item.id===chatId)
+    const ok=window.confirm(`"${chat?.title??'Bu söhbət'}" silinsin?`)
+    if(!ok)return
+
+    const {error}=await supabase
+      .from('tecgpt_chats')
+      .delete()
+      .eq('id',chatId)
+
+    if(error){
+      window.alert('Söhbət silinə bilmədi.')
+      console.error(error)
+      return
+    }
+
+    const remaining=chats.filter(item=>item.id!==chatId)
+    setChats(remaining)
+
+    if(activeChatId===chatId){
+      if(remaining.length){
+        await loadChat(remaining[0].id)
+      }else{
+        setActiveChatId(null)
+        setMessages([makeWelcome()])
+      }
+    }
+  }
+
+  async function send(text?:string){
+    const value=(text??input).trim()
+
+    if(!value||typing)return
+
+    const userMessage:TecGPTMessage={
+      id:`local-user-${Date.now()}`,
+      role:'user',
+      text:value,
+    }
+
+    const outgoingMessages=[...messages,userMessage]
 
     setMessages(outgoingMessages)
     setInput('')
     setTyping(true)
 
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
+    let chatId=activeChatId
 
-      if (!session?.access_token) {
+    try{
+      if(!chatId){
+        chatId=await createChat(value)
+      }
+
+      await saveMessage(chatId,'user',value)
+
+      const {
+        data:{session},
+      }=await supabase.auth.getSession()
+
+      if(!session?.access_token){
         throw new Error('Admin sessiyası tapılmadı.')
       }
 
-      const response = await fetch('/api/tecgpt', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
+      const response=await fetch('/api/tecgpt',{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          Authorization:`Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({
-          messages: outgoingMessages.map((message) => ({
-            role: message.role,
-            text: message.text,
-          })),
+        body:JSON.stringify({
+          messages:outgoingMessages
+            .slice(-12)
+            .map(message=>({
+              role:message.role,
+              text:message.text,
+            })),
         }),
       })
 
-      const data = await response.json()
+      const raw=await response.text()
 
-      if (!response.ok) {
-        throw new Error(
-          data?.error || 'TECGPT cavab verə bilmədi.'
-        )
+      let data:{reply?:string;error?:string}={}
+      try{
+        data=raw?JSON.parse(raw):{}
+      }catch{
+        data={error:raw||'Server cavabı oxuna bilmədi.'}
       }
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now() + 1,
-          role: 'assistant',
-          text: data.reply,
-        },
-      ])
-    } catch (error) {
-      const message =
+      if(!response.ok){
+        throw new Error(data.error||'TECGPT cavab verə bilmədi.')
+      }
+
+      const reply=(data.reply??'').trim()
+
+      if(!reply){
+        throw new Error('TECGPT boş cavab qaytardı.')
+      }
+
+      await saveMessage(chatId,'assistant',reply)
+
+      const assistantMessage:TecGPTMessage={
+        id:`local-assistant-${Date.now()}`,
+        role:'assistant',
+        text:reply,
+      }
+
+      setMessages(prev=>[...prev,assistantMessage])
+      await touchChat(chatId)
+    }catch(error){
+      const message=
         error instanceof Error
           ? error.message
           : 'TECGPT-də naməlum xəta baş verdi.'
 
-      setMessages((prev) => [
+      setMessages(prev=>[
         ...prev,
         {
-          id: Date.now() + 1,
-          role: 'assistant',
-          text: `⚠️ ${message}`,
+          id:`local-error-${Date.now()}`,
+          role:'assistant',
+          text:`⚠️ ${message}`,
         },
       ])
-    } finally {
+    }finally{
       setTyping(false)
     }
   }
@@ -350,13 +590,57 @@ function TecGPTBeta({email}:{email:string}){
     <aside className="tecgpt-sidebar">
       <div className="tecgpt-brand">
         <div className="tecgpt-logo">T</div>
-        <div><strong>TECGPT</strong><span>BAAU TEC AI</span></div>
+        <div>
+          <strong>TECGPT</strong>
+          <span>BAAU TEC AI</span>
+        </div>
       </div>
-      <button className="tecgpt-new" onClick={newChat}>＋ Yeni söhbət</button>
+
+      <button className="tecgpt-new" onClick={newChat}>
+        ＋ Yeni söhbət
+      </button>
+
       <div className="tecgpt-side-note">
         <span className="tecgpt-dot"/> Beta test
         <p>Yalnız administratorlar üçün aktivdir.</p>
       </div>
+
+      <div className="tecgpt-history">
+        <div className="tecgpt-history-title">Söhbətlər</div>
+
+        {loadingHistory
+          ? <div className="tecgpt-history-empty">Yüklənir...</div>
+          : chats.length===0
+            ? <div className="tecgpt-history-empty">Hələ söhbət yoxdur.</div>
+            : chats.map(chat=>
+              <div
+                key={chat.id}
+                className={`tecgpt-history-row ${activeChatId===chat.id?'active':''}`}
+              >
+                <button
+                  className="tecgpt-history-open"
+                  onClick={()=>void openChat(chat.id)}
+                  title={chat.title}
+                >
+                  <span>{chat.title}</span>
+                </button>
+
+                <button
+                  className="tecgpt-history-delete"
+                  onClick={e=>{
+                    e.stopPropagation()
+                    void deleteChat(chat.id)
+                  }}
+                  aria-label="Söhbəti sil"
+                  title="Söhbəti sil"
+                >
+                  ×
+                </button>
+              </div>
+            )
+        }
+      </div>
+
       <div className="tecgpt-user">
         <small>Daxil olan admin</small>
         <strong>{email}</strong>
@@ -369,36 +653,120 @@ function TecGPTBeta({email}:{email:string}){
           <h1>TECGPT <span>BETA</span></h1>
           <p>BAAU Tələbə Elmi Cəmiyyətinin ağıllı köməkçisi</p>
         </div>
-        <button className="tecgpt-back" onClick={()=>window.location.href='/admin'}>← Admin panel</button>
+
+        <div className="tecgpt-top-actions">
+          <select
+            className="tecgpt-mobile-history"
+            value={activeChatId??''}
+            onChange={e=>{
+              const value=e.target.value
+              if(value){
+                void openChat(value)
+              }else{
+                newChat()
+              }
+            }}
+            aria-label="Söhbətlər"
+          >
+            <option value="">＋ Yeni söhbət</option>
+            {chats.map(chat=>
+              <option key={chat.id} value={chat.id}>
+                {chat.title}
+              </option>
+            )}
+          </select>
+
+          <button
+            className="tecgpt-back"
+            onClick={()=>window.location.href='/admin'}
+          >
+            ← Admin panel
+          </button>
+        </div>
       </header>
 
       <div className="tecgpt-chat">
         <div className="tecgpt-messages">
-          {messages.map(m=><div key={m.id} className={`tecgpt-message ${m.role}`}>
-            <div className="tecgpt-avatar">{m.role==='assistant'?'T':'S'}</div>
-            <div className="tecgpt-bubble">
-              {m.role === 'assistant' ? (
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {m.text}
-                </ReactMarkdown>
-              ) : (
-                m.text
-              )}
+          {messages.map(message=>
+            <div
+              key={message.id}
+              className={`tecgpt-message ${message.role}`}
+            >
+              <div className="tecgpt-avatar">
+                {message.role==='assistant'?'T':'S'}
+              </div>
+
+              <div className="tecgpt-bubble">
+                {message.role==='assistant'
+                  ? (
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {message.text}
+                    </ReactMarkdown>
+                  )
+                  : message.text
+                }
+              </div>
             </div>
-          </div>)}
-          {typing?<div className="tecgpt-message assistant"><div className="tecgpt-avatar">T</div><div className="tecgpt-bubble tecgpt-typing"><i/><i/><i/></div></div>:null}
+          )}
+
+          {typing
+            ? (
+              <div className="tecgpt-message assistant">
+                <div className="tecgpt-avatar">T</div>
+                <div className="tecgpt-bubble tecgpt-typing">
+                  <i/><i/><i/>
+                </div>
+              </div>
+            )
+            : null
+          }
         </div>
 
-        {messages.length<=1?<div className="tecgpt-quick">
-          {quick.map(q=><button key={q} onClick={()=>send(q)}>{q}</button>)}
-        </div>:null}
+        {messages.length<=1
+          ? (
+            <div className="tecgpt-quick">
+              {quick.map(question=>
+                <button
+                  key={question}
+                  onClick={()=>void send(question)}
+                >
+                  {question}
+                </button>
+              )}
+            </div>
+          )
+          : null
+        }
 
         <div className="tecgpt-compose-wrap">
-          <form className="tecgpt-compose" onSubmit={e=>{e.preventDefault();send()}}>
-            <textarea value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}} placeholder="TECGPT-yə mesaj yaz..." rows={1}/>
-            <button disabled={!input.trim()||typing}>Göndər</button>
+          <form
+            className="tecgpt-compose"
+            onSubmit={e=>{
+              e.preventDefault()
+              void send()
+            }}
+          >
+            <textarea
+              value={input}
+              onChange={e=>setInput(e.target.value)}
+              onKeyDown={e=>{
+                if(e.key==='Enter'&&!e.shiftKey){
+                  e.preventDefault()
+                  void send()
+                }
+              }}
+              placeholder="TECGPT-yə mesaj yaz..."
+              rows={1}
+            />
+
+            <button disabled={!input.trim()||typing}>
+              Göndər
+            </button>
           </form>
-          <p>TECGPT beta • AI bağlantısı test rejimindədir • Şəxsi tələbə məlumatlarına çıxışı yoxdur</p>
+
+          <p>
+            TECGPT beta • Söhbətlər hesabınıza bağlı saxlanılır • Şəxsi tələbə məlumatlarına çıxışı yoxdur
+          </p>
         </div>
       </div>
     </section>
