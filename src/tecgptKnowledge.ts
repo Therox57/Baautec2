@@ -480,7 +480,7 @@ TEC sədri:
 Nərmin Ramin qızı Nurullayeva
 
 Sədr müavini:
-Rəşad Məmmədov
+Rəşad Əliyev
 
 kimi göstərilir.
 
