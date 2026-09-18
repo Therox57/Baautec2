@@ -43,7 +43,9 @@ type Errors = Partial<Record<'firstName'|'lastName'|'fatherName'|'birth'|'gender
 
 export function App() {
   const path = window.location.pathname.replace(/\/+$/, '') || '/'
-  return path === '/admin' ? <AdminPage /> : <MembershipPage />
+  if (path === '/admin') return <AdminPage />
+  if (path === '/tecgpt-test') return <TecGPTBetaPage />
+  return <MembershipPage />
 }
 
 function formatPhone(digits: string) {
@@ -222,6 +224,177 @@ function formatDate(value: string) {
   return new Date(value).toLocaleString('az-AZ',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})
 }
 
+type TecGPTMessage = { id: number; role: 'assistant' | 'user'; text: string }
+
+function TecGPTBetaPage(){
+  const [checking,setChecking]=useState(true)
+  const [userEmail,setUserEmail]=useState<string|null>(null)
+  const [isAdmin,setIsAdmin]=useState(false)
+
+  useEffect(()=>{
+    let active=true
+    async function check(){
+      setChecking(true)
+      const {data}=await supabase.auth.getUser()
+      if(!active)return
+      const user=data.user
+      if(!user){setUserEmail(null);setIsAdmin(false);setChecking(false);return}
+      const {data:role}=await supabase.from('user_roles').select('role').eq('user_id',user.id).eq('role','admin').maybeSingle()
+      if(!active)return
+      setUserEmail(user.email??null)
+      setIsAdmin(role?.role==='admin')
+      setChecking(false)
+    }
+    void check()
+    const {data:sub}=supabase.auth.onAuthStateChange(()=>void check())
+    return()=>{active=false;sub.subscription.unsubscribe()}
+  },[])
+
+  if(checking)return <div className="center-page"><Loader2 className="spin muted"/></div>
+  if(!userEmail)return <AdminLogin/>
+  if(!isAdmin)return <Unauthorized email={userEmail}/>
+  return <TecGPTBeta email={userEmail}/>
+}
+
+function TecGPTBeta({email}:{email:string}){
+  const firstMessage='Salam! Mən TECGPT-yəm. BAAU TEC, üzvlük, tədbirlər və tələbə elmi fəaliyyəti ilə bağlı köməkçi kimi hazırlanacağam. Hazırda yalnız beta interfeysi test olunur.'
+  const [messages,setMessages]=useState<TecGPTMessage[]>([{id:1,role:'assistant',text:firstMessage}])
+  const [input,setInput]=useState('')
+  const [typing,setTyping]=useState(false)
+  const quick=['TEC nədir?','TEC-ə necə üzv olum?','Tədbirlər haqqında məlumat','Üzvlüyün üstünlükləri']
+
+  function newChat(){
+    setMessages([{id:Date.now(),role:'assistant',text:firstMessage}])
+    setInput('')
+    setTyping(false)
+  }
+
+    async function send(text?: string) {
+    const value = (text ?? input).trim()
+
+    if (!value || typing) return
+
+    const userMessage: TecGPTMessage = {
+      id: Date.now(),
+      role: 'user',
+      text: value,
+    }
+
+    const outgoingMessages = [...messages, userMessage]
+
+    setMessages(outgoingMessages)
+    setInput('')
+    setTyping(true)
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!session?.access_token) {
+        throw new Error('Admin sessiyası tapılmadı.')
+      }
+
+      const response = await fetch('/api/tecgpt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          messages: outgoingMessages.map((message) => ({
+            role: message.role,
+            text: message.text,
+          })),
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          data?.error || 'TECGPT cavab verə bilmədi.'
+        )
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          role: 'assistant',
+          text: data.reply,
+        },
+      ])
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'TECGPT-də naməlum xəta baş verdi.'
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          role: 'assistant',
+          text: `⚠️ ${message}`,
+        },
+      ])
+    } finally {
+      setTyping(false)
+    }
+  }
+
+  return <main className="tecgpt-shell">
+    <aside className="tecgpt-sidebar">
+      <div className="tecgpt-brand">
+        <div className="tecgpt-logo">T</div>
+        <div><strong>TECGPT</strong><span>BAAU TEC AI</span></div>
+      </div>
+      <button className="tecgpt-new" onClick={newChat}>＋ Yeni söhbət</button>
+      <div className="tecgpt-side-note">
+        <span className="tecgpt-dot"/> Beta test
+        <p>Yalnız administratorlar üçün aktivdir.</p>
+      </div>
+      <div className="tecgpt-user">
+        <small>Daxil olan admin</small>
+        <strong>{email}</strong>
+      </div>
+    </aside>
+
+    <section className="tecgpt-main">
+      <header className="tecgpt-topbar">
+        <div>
+          <h1>TECGPT <span>BETA</span></h1>
+          <p>BAAU Tələbə Elmi Cəmiyyətinin ağıllı köməkçisi</p>
+        </div>
+        <button className="tecgpt-back" onClick={()=>window.location.href='/admin'}>← Admin panel</button>
+      </header>
+
+      <div className="tecgpt-chat">
+        <div className="tecgpt-messages">
+          {messages.map(m=><div key={m.id} className={`tecgpt-message ${m.role}`}>
+            <div className="tecgpt-avatar">{m.role==='assistant'?'T':'S'}</div>
+            <div className="tecgpt-bubble">{m.text}</div>
+          </div>)}
+          {typing?<div className="tecgpt-message assistant"><div className="tecgpt-avatar">T</div><div className="tecgpt-bubble tecgpt-typing"><i/><i/><i/></div></div>:null}
+        </div>
+
+        {messages.length<=1?<div className="tecgpt-quick">
+          {quick.map(q=><button key={q} onClick={()=>send(q)}>{q}</button>)}
+        </div>:null}
+
+        <div className="tecgpt-compose-wrap">
+          <form className="tecgpt-compose" onSubmit={e=>{e.preventDefault();send()}}>
+            <textarea value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}} placeholder="TECGPT-yə mesaj yaz..." rows={1}/>
+            <button disabled={!input.trim()||typing}>Göndər</button>
+          </form>
+          <p>TECGPT beta • AI bağlantısı test rejimindədir • Şəxsi tələbə məlumatlarına çıxışı yoxdur</p>
+        </div>
+      </div>
+    </section>
+  </main>
+}
+
 function AdminPage() {
   const [checking,setChecking] = useState(true)
   const [userEmail,setUserEmail] = useState<string|null>(null)
@@ -344,7 +517,7 @@ function AdminDashboard({email}:{email:string}){
   const totalPages=Math.max(1,Math.ceil(filtered.length/PAGE_SIZE)); const currentPage=Math.min(page,totalPages); const pageRows=filtered.slice((currentPage-1)*PAGE_SIZE,currentPage*PAGE_SIZE)
   const today=new Date();today.setHours(0,0,0,0); const weekAgo=new Date(Date.now()-7*86400000); const todayCount=rows.filter(r=>new Date(r.created_at)>=today).length; const weekCount=rows.filter(r=>new Date(r.created_at)>=weekAgo).length
   function exportCsv(){const headers=['Ad','Soyad','Ata adı','Doğum tarixi','Cins','Telefon','E-poçt','Fakültə','İxtisas','Kurs','Motivasiya','Dillər','Bacarıqlar','Əlavə qeyd','Qeydiyyat tarixi']; const lines=filtered.map(r=>[r.first_name,r.last_name,r.father_name,r.birth_date,r.gender,r.phone,r.email,r.faculty,r.specialty,r.course,r.membership_reason,(r.languages??[]).map(l=>`${l.language} (${l.level})`).join('; '),r.skills??'',r.additional_note??'',formatDate(r.created_at)].map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')); const url=URL.createObjectURL(new Blob(['\uFEFF'+[headers.join(','),...lines].join('\n')],{type:'text/csv;charset=utf-8'})); const a=document.createElement('a');a.href=url;a.download=`tec-qeydiyyatlar-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(url)}
-  return <main className="page admin-page"><header className="site-header admin-header"><div className="content wide header-row"><div><h1>TEC İdarəetmə Paneli</h1><p>{email}</p></div><div className="header-actions"><button className="ghost-light" onClick={()=>void load()}>Yenilə</button><button className="ghost-light" onClick={()=>supabase.auth.signOut()}><LogOut size={16}/> Çıxış</button></div></div></header>
+  return <main className="page admin-page"><header className="site-header admin-header"><div className="content wide header-row"><div><h1>TEC İdarəetmə Paneli</h1><p>{email}</p></div><div className="header-actions"><button className="ghost-light" onClick={()=>window.location.href='/tecgpt-test'}>TECGPT Beta</button><button className="ghost-light" onClick={()=>void load()}>Yenilə</button><button className="ghost-light" onClick={()=>supabase.auth.signOut()}><LogOut size={16}/> Çıxış</button></div></div></header>
     <div className="content wide admin-content">{loadError?<div className="card alert-error">{loadError}</div>:null}<div className="stats-grid">{[['Ümumi qeydiyyat sayı',rows.length],['Bu gün qeydiyyatdan keçənlər',todayCount],['Bu həftə qeydiyyatdan keçənlər',weekCount]].map(([label,value])=><div className="card stat" key={String(label)}><p>{label}</p><strong>{value}</strong></div>)}</div>
       <AddAdminCard />
       <div className="card filters"><div className="search-wrap"><Search size={18}/><input className="control" placeholder="Ad və ya soyad üzrə axtarış" value={search} onChange={e=>{setSearch(e.target.value);setPage(1)}}/></div><div className="filter-grid"><select className="control" value={faculty} onChange={e=>{setFaculty(e.target.value);setPage(1)}}><option value="">Bütün fakültələr</option>{faculties.map(x=><option key={x}>{x}</option>)}</select><select className="control" value={specialty} onChange={e=>{setSpecialty(e.target.value);setPage(1)}}><option value="">Bütün ixtisaslar</option>{specialties.map(x=><option key={x}>{x}</option>)}</select><select className="control" value={course} onChange={e=>{setCourse(e.target.value);setPage(1)}}><option value="">Bütün kurslar</option>{courses.map(x=><option key={x}>{x}</option>)}</select><select className="control" value={sort} onChange={e=>setSort(e.target.value as 'new'|'old')}><option value="new">Əvvəlcə yenilər</option><option value="old">Əvvəlcə köhnələr</option></select></div><button className="outline-btn" onClick={exportCsv}><Download size={16}/> CSV olaraq yüklə</button></div>
