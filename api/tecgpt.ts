@@ -1,14 +1,92 @@
 /// <reference types="node" />
+
 import {
   TECGPT_KNOWLEDGE,
   TECGPT_SYSTEM_RULES,
 } from "../src/tecgptKnowledge.js";
 
+const PRIMARY_MODEL = "gemini-3.8-flash";
+const FALLBACK_MODEL = "gemini-3.5-flash-lite";
+
+const sleep = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
+async function callGemini(
+  model: string,
+  geminiKey: string,
+  payload: unknown
+) {
+  return fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": geminiKey,
+      },
+      body: JSON.stringify(payload),
+    }
+  );
+}
+
+function isRetryable(status: number) {
+  return status === 408 ||
+    status === 429 ||
+    status === 500 ||
+    status === 502 ||
+    status === 503 ||
+    status === 504;
+}
+
+async function runModel(
+  model: string,
+  geminiKey: string,
+  payload: unknown,
+  maxAttempts = 3
+) {
+  let lastResponse: Response | null = null;
+  let lastData: any = null;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const response = await callGemini(model, geminiKey, payload);
+    const data = await response.json().catch(() => ({}));
+
+    lastResponse = response;
+    lastData = data;
+
+    if (response.ok) {
+      return {
+        ok: true as const,
+        response,
+        data,
+      };
+    }
+
+    if (!isRetryable(response.status)) {
+      break;
+    }
+
+    if (attempt < maxAttempts - 1) {
+      const baseDelay = 700 * Math.pow(2, attempt);
+      const jitter = Math.floor(Math.random() * 250);
+      await sleep(baseDelay + jitter);
+    }
+  }
+
+  return {
+    ok: false as const,
+    response: lastResponse,
+    data: lastData,
+  };
+}
+
 export default async function handler(req: any, res: any) {
   res.setHeader("Cache-Control", "no-store");
 
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({
+      error: "Method not allowed",
+    });
   }
 
   try {
@@ -28,8 +106,9 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    // ADMIN TOKEN
-    const authHeader = String(req.headers.authorization || "");
+    const authHeader = String(
+      req.headers.authorization || ""
+    );
 
     if (!authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
@@ -39,7 +118,6 @@ export default async function handler(req: any, res: any) {
 
     const accessToken = authHeader.slice(7);
 
-    // USER-I YOXLA
     const userResponse = await fetch(
       `${supabaseUrl}/auth/v1/user`,
       {
@@ -58,7 +136,6 @@ export default async function handler(req: any, res: any) {
 
     const user = await userResponse.json();
 
-    // ADMIN ROLUNU YOXLA
     const roleResponse = await fetch(
       `${supabaseUrl}/rest/v1/user_roles?user_id=eq.${encodeURIComponent(
         user.id
@@ -71,7 +148,9 @@ export default async function handler(req: any, res: any) {
       }
     );
 
-    const roles = await roleResponse.json();
+    const roles = await roleResponse
+      .json()
+      .catch(() => []);
 
     if (
       !roleResponse.ok ||
@@ -79,11 +158,11 @@ export default async function handler(req: any, res: any) {
       roles.length === 0
     ) {
       return res.status(403).json({
-        error: "Bu funksiya yalnız administratorlar üçündür.",
+        error:
+          "Bu funksiya yalnız administratorlar üçündür.",
       });
     }
 
-    // MESAJLAR
     let body = req.body;
 
     if (typeof body === "string") {
@@ -109,7 +188,6 @@ export default async function handler(req: any, res: any) {
           }))
       : [];
 
-    // Gemini söhbəti user mesajı ilə başlasın
     while (
       messages.length &&
       messages[0].role === "assistant"
@@ -124,13 +202,15 @@ export default async function handler(req: any, res: any) {
     }
 
     const totalLength = messages.reduce(
-      (sum: number, m: any) => sum + m.text.length,
+      (sum: number, m: any) =>
+        sum + m.text.length,
       0
     );
 
     if (totalLength > 12000) {
       return res.status(400).json({
-        error: "Söhbət həddən artıq uzundur. Yeni söhbət başladın.",
+        error:
+          "Söhbət həddən artıq uzundur. Yeni söhbət başladın.",
       });
     }
 
@@ -160,7 +240,10 @@ ${new Date().toISOString().slice(0, 10)}
 `;
 
     const contents = messages.map((m: any) => ({
-      role: m.role === "assistant" ? "model" : "user",
+      role:
+        m.role === "assistant"
+          ? "model"
+          : "user",
       parts: [
         {
           text: m.text,
@@ -168,51 +251,62 @@ ${new Date().toISOString().slice(0, 10)}
       ],
     }));
 
-    const geminiResponse = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": geminiKey,
-        },
-        body: JSON.stringify({
-          system_instruction: {
-            parts: [
-              {
-                text: systemInstruction,
-              },
-            ],
+    const payload = {
+      system_instruction: {
+        parts: [
+          {
+            text: systemInstruction,
           },
+        ],
+      },
+      contents,
+      generationConfig: {
+        maxOutputTokens: 1200,
+      },
+    };
 
-          contents,
+    let usedModel = PRIMARY_MODEL;
 
-          generationConfig: {
-            maxOutputTokens: 1200,
-            thinkingConfig: {
-              thinkingLevel: "low",
-            },
-          },
-        }),
-      }
+    let result = await runModel(
+      PRIMARY_MODEL,
+      geminiKey,
+      payload,
+      3
     );
 
-    const geminiData = await geminiResponse.json();
+    if (!result.ok) {
+      console.warn(
+        "Primary Gemini model failed:",
+        PRIMARY_MODEL,
+        result.response?.status,
+        result.data?.error?.message || ""
+      );
 
-    if (!geminiResponse.ok) {
+      usedModel = FALLBACK_MODEL;
+
+      result = await runModel(
+        FALLBACK_MODEL,
+        geminiKey,
+        payload,
+        2
+      );
+    }
+
+    if (!result.ok) {
       console.error(
         "Gemini API error:",
-        geminiResponse.status,
-        geminiData
+        result.response?.status,
+        result.data?.error?.message || ""
       );
 
       return res.status(502).json({
-        error: "TECGPT hazırda cavab yarada bilmədi.",
+        error:
+          "TECGPT hazırda cavab yarada bilmədi. Bir neçə saniyə sonra yenidən yoxlayın.",
       });
     }
 
     const reply =
-      geminiData?.candidates?.[0]?.content?.parts
+      result.data?.candidates?.[0]?.content?.parts
         ?.map((part: any) => part?.text || "")
         .join("")
         .trim() || "";
@@ -225,12 +319,19 @@ ${new Date().toISOString().slice(0, 10)}
 
     return res.status(200).json({
       reply,
+      model: usedModel,
     });
   } catch (error) {
-    console.error("TECGPT server error:", error);
+    console.error(
+      "TECGPT server error:",
+      error instanceof Error
+        ? error.message
+        : error
+    );
 
     return res.status(500).json({
-      error: "TECGPT serverində xəta baş verdi.",
+      error:
+        "TECGPT serverində xəta baş verdi.",
     });
   }
 }
