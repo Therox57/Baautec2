@@ -221,6 +221,15 @@ function MembershipPage() {
       </form>
     </div>
     <Modal open={privacyOpen} onClose={()=>setPrivacyOpen(false)} title="Məxfilik haqqında"><PrivacyContent/></Modal>
+    <a
+      className="tecgpt-float"
+      href="/tecgpt-guest"
+      aria-label="TECGPT-ni aç"
+      title="TECGPT-ni sına"
+    >
+      <img src="/tecgpt-logo.png" alt="" aria-hidden="true" className="tecgpt-float-logo" />
+      <span className="tecgpt-float-label">TECGPT</span>
+    </a>
   </main>
 }
 
