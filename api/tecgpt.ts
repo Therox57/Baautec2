@@ -112,7 +112,7 @@ export default async function handler(req: any, res: any) {
 
     if (!authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
-        error: "Admin girişi tələb olunur.",
+        error: "TECGPT girişi tələb olunur.",
       });
     }
 
@@ -139,7 +139,7 @@ export default async function handler(req: any, res: any) {
     const roleResponse = await fetch(
       `${supabaseUrl}/rest/v1/user_roles?user_id=eq.${encodeURIComponent(
         user.id
-      )}&role=eq.admin&select=role&limit=1`,
+      )}&role=in.(admin,tester)&select=role&limit=1`,
       {
         headers: {
           apikey: supabaseKey,
@@ -159,7 +159,7 @@ export default async function handler(req: any, res: any) {
     ) {
       return res.status(403).json({
         error:
-          "Bu funksiya yalnız administratorlar üçündür.",
+          "Bu funksiya yalnız TECGPT tester və administratorları üçündür.",
       });
     }
 

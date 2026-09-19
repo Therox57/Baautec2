@@ -244,7 +244,7 @@ function TecGPTBetaPage(){
   const [checking,setChecking]=useState(true)
   const [userEmail,setUserEmail]=useState<string|null>(null)
   const [userId,setUserId]=useState<string|null>(null)
-  const [isAdmin,setIsAdmin]=useState(false)
+  const [canUseTecGPT,setCanUseTecGPT]=useState(false)
 
   useEffect(()=>{
     let active=true
@@ -260,23 +260,24 @@ function TecGPTBetaPage(){
       if(!user){
         setUserEmail(null)
         setUserId(null)
-        setIsAdmin(false)
+        setCanUseTecGPT(false)
         setChecking(false)
         return
       }
 
-      const {data:role}=await supabase
+      const {data:roles}=await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id',user.id)
-        .eq('role','admin')
-        .maybeSingle()
+        .in('role',['admin','tester'])
 
       if(!active)return
 
       setUserEmail(user.email??null)
       setUserId(user.id)
-      setIsAdmin(role?.role==='admin')
+      setCanUseTecGPT(
+        roles?.some(({role})=>role==='admin'||role==='tester')??false
+      )
       setChecking(false)
     }
 
@@ -292,7 +293,7 @@ function TecGPTBetaPage(){
 
   if(checking)return <div className="center-page"><Loader2 className="spin muted"/></div>
   if(!userEmail||!userId)return <AdminLogin/>
-  if(!isAdmin)return <Unauthorized email={userEmail}/>
+  if(!canUseTecGPT)return <Unauthorized email={userEmail}/>
 
   return <TecGPTBeta email={userEmail} userId={userId}/>
 }
