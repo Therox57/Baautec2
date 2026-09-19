@@ -10,6 +10,7 @@ import {
   X,
 } from 'lucide-react'
 import { supabase } from './supabase'
+import { TecGPTGuestPage } from './TecGPTGuestPage'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
@@ -47,6 +48,7 @@ export function App() {
   const path = window.location.pathname.replace(/\/+$/, '') || '/'
   if (path === '/admin') return <AdminPage />
   if (path === '/tecgpt-test') return <TecGPTBetaPage />
+  if (path === '/tecgpt-guest') return <TecGPTGuestPage />
   return <MembershipPage />
 }
 
