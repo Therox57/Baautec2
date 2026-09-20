@@ -522,6 +522,11 @@ BAAU-nun rəsmi xəbərlərində TEC-in nəzdində göstərilən klublar:
 - Debat klubu — 14 dekabr 2024-cü il tarixli xəbər.
   https://baau.edu.az/az/article/baau-da-gender-beraberliyi-movzusunda-debat-gorusu-kecirilib-412
 
+- Oxucular klubu — BAAU TEC-in rəsmi Instagram profilində
+  "TEC Oxucular" adlı seçilmiş hekayə kimi göstərilir.
+  https://www.instagram.com/baau__tec/
+  Klubun hazırkı aktivliyi və rəhbəri ayrıca təsdiq tələb edir.
+
 Aktyorluq klubu 4 fevral 2024-cü il tarixli rəsmi xəbərdə
 TGT-nin nəzdində göstərilib. Onu TEC klubu kimi təqdim etmə.
 https://baau.edu.az/az/article/baki-avrasiya-universitetinin-telebe-gencler-teskilati-ilin-telebe-gencler-teskilati-secilib-204
