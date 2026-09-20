@@ -508,23 +508,33 @@ vəzifələr barədə istifadəçinin verdiyi və ya TEC-in təsdiqlədiyi
 yeni məlumat daha aktual hesab edilə bilər.
 
 ==================================================
-TEC KLUBLARI
+TEC KLUBLARI — YOXLANMIŞ MƏLUMAT
 ==================================================
 
-BAAU-nun rəsmi TEC səhifəsində aşağıdakı klub istiqamətləri göstərilir:
+TEC və TGT ayrı təşkilatlardır. Universitetdəki bütün klubları
+avtomatik olaraq TEC-ə aid etmə.
 
-- Aktyorluq klubu
-- Davamlı inkişaf üçün gənclər klubu
-- Əyləncə klubu
-- İdman klubu
-- İntellektual oyunlar klubu
-- Mədəniyyət və vətənpərvərlik klubu
-- MUN
-- Musiqi klubu
-- Rəqs klubu
-- Şahmat klubu
+BAAU-nun rəsmi xəbərlərində TEC-in nəzdində göstərilən klublar:
 
-Klubların aktivlik vəziyyəti və rəhbərləri zamanla dəyişə bilər.
+- Yazıçılar klubu — 19 dekabr 2024-cü il tarixli xəbər.
+  https://baau.edu.az/az/article/baau-da-poeziya-gunu-tedbiri-bas-tutub-417
+
+- Debat klubu — 14 dekabr 2024-cü il tarixli xəbər.
+  https://baau.edu.az/az/article/baau-da-gender-beraberliyi-movzusunda-debat-gorusu-kecirilib-412
+
+Aktyorluq klubu 4 fevral 2024-cü il tarixli rəsmi xəbərdə
+TGT-nin nəzdində göstərilib. Onu TEC klubu kimi təqdim etmə.
+https://baau.edu.az/az/article/baki-avrasiya-universitetinin-telebe-gencler-teskilati-ilin-telebe-gencler-teskilati-secilib-204
+
+Əvvəlki 10 klubluq siyahının bütövlükdə TEC-ə aid olması
+və hazırda aktual qalması təsdiqlənməyib.
+
+Yuxarıdakı xəbərlər 2024-cü ilə aiddir. Klubların hazırda
+fəaliyyət göstərdiyini və ya cari rəhbərlərinin kim olduğunu
+təsdiq olmadan iddia etmə.
+
+Cari və tam klub siyahısı soruşularsa, BAAU TEC idarə
+heyətinin son təsdiqlənmiş məlumatına yönləndir.
 
 ==================================================
 BAAU TEC YERLƏŞMƏ
