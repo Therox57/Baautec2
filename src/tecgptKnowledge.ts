@@ -474,15 +474,13 @@ TEC-in əsas istiqamətləri:
 TEC RƏHBƏRLİYİ
 ==================================================
 
-BAAU-nun rəsmi TEC səhifəsində hazırda:
+22 sentyabr 2026-cı ildə sayt sahibinin verdiyi yenilənmiş məlumata əsasən:
 
 TEC sədri:
-Nərmin Ramin qızı Nurullayeva
-
-Sədr müavini:
 Rəşad Əliyev
 
-kimi göstərilir.
+Sədr müavini:
+Yeni sədr müavini barədə təsdiqlənmiş məlumat yoxdur.
 
 Bu vəzifələr zamanla dəyişə bilər.
 
