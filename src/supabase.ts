@@ -7,8 +7,12 @@ if (!url || !key) {
   throw new Error('VITE_SUPABASE_URL və VITE_SUPABASE_PUBLISHABLE_KEY təyin edilməyib.')
 }
 
+if (key.startsWith('sb_secret_')) {
+  throw new Error('Secret Supabase keys must never be exposed in browser code.')
+}
+
 function isNewSupabaseApiKey(value: string) {
-  return value.startsWith('sb_publishable_') || value.startsWith('sb_secret_')
+  return value.startsWith('sb_publishable_')
 }
 
 function customFetch(supabaseKey: string): typeof fetch {

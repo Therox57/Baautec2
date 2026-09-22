@@ -1,23 +1,6 @@
 /// <reference types="node" />
 
-import { Redis } from "@upstash/redis";
-import { Ratelimit } from "@upstash/ratelimit";
-
-function createGuestLimiter() {
-  const url = process.env.KV_REST_API_URL;
-  const token = process.env.KV_REST_API_TOKEN;
-
-  if (!url || !token) {
-    throw new Error("Guest Redis configuration is missing.");
-  }
-
-  return new Ratelimit({
-    redis: new Redis({ url, token }),
-    limiter: Ratelimit.slidingWindow(60, "1 h"),
-    prefix: "tecgpt:guest:hourly",
-  });
-}
-
+import { clientIp, enforceLimit, validateChatRequest, sendSecurityError } from "../server/security.js";
 
 import {
   TECGPT_KNOWLEDGE,
@@ -39,6 +22,7 @@ async function callGemini(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
     {
       method: "POST",
+      signal: AbortSignal.timeout(20000),
       headers: {
         "Content-Type": "application/json",
         "x-goog-api-key": geminiKey,
@@ -102,13 +86,10 @@ async function runModel(
 export default async function handler(req: any, res: any) {
   res.setHeader("Cache-Control", "no-store");
 
-  if (req.method !== "POST") {
-    return res.status(405).json({
-      error: "Method not allowed",
-    });
-  }
+  res.setHeader("X-Content-Type-Options", "nosniff");
 
   try {
+    const messages = validateChatRequest(req);
     const geminiKey = process.env.GEMINI_API_KEY;
 
     if (
@@ -121,98 +102,11 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    const forwarded =
-      req.headers["x-vercel-forwarded-for"] ||
-      req.headers["x-forwarded-for"];
-
-    const ip = String(
-      (Array.isArray(forwarded) ? forwarded[0] : forwarded) ||
-      req.socket?.remoteAddress ||
-      "unknown"
-    ).split(",")[0].trim() || "unknown";
-
-    try {
-      const hourlyLimiter = createGuestLimiter();
-
-      const dailyLimiter = new Ratelimit({
-        redis: new Redis({
-          url: process.env.KV_REST_API_URL,
-          token: process.env.KV_REST_API_TOKEN,
-        }),
-        limiter: Ratelimit.slidingWindow(1000, "1 d"),
-        prefix: "tecgpt:guest:daily-global",
-      });
-
-      const [hourly, daily] = await Promise.all([
-        hourlyLimiter.limit(ip),
-        dailyLimiter.limit("all-guests"),
-      ]);
-
-      if (!hourly.success || !daily.success) {
-        return res.status(429).json({
-          error: !hourly.success
-            ? "Saatlıq 60 sorğu limitinə çatmısınız. Bir qədər sonra yenidən yoxlayın."
-            : "TECGPT-nin ümumi gündəlik test limiti dolub. Daha sonra yenidən yoxlayın.",
-        });
-      }
-    } catch (error) {
-      console.error("Guest rate limit error:", error);
-
-      return res.status(503).json({
-        error: "TECGPT test limiti hazırda yoxlanıla bilmir.",
-      });
-    }
-
-    let body = req.body;
-
-    if (typeof body === "string") {
-      try {
-        body = JSON.parse(body);
-      } catch {
-        body = {};
-      }
-    }
-
-    let messages = Array.isArray(body?.messages)
-      ? body.messages
-          .filter(
-            (m: any) =>
-              (m?.role === "user" ||
-                m?.role === "assistant") &&
-              typeof m?.text === "string"
-          )
-          .slice(-12)
-          .map((m: any) => ({
-            role: m.role,
-            text: m.text.trim().slice(0, 4000),
-          }))
-      : [];
-
-    while (
-      messages.length &&
-      messages[0].role === "assistant"
-    ) {
-      messages.shift();
-    }
-
-    if (!messages.length) {
-      return res.status(400).json({
-        error: "Mesaj boşdur.",
-      });
-    }
-
-    const totalLength = messages.reduce(
-      (sum: number, m: any) =>
-        sum + m.text.length,
-      0
-    );
-
-    if (totalLength > 12000) {
-      return res.status(400).json({
-        error:
-          "Söhbət həddən artıq uzundur. Yeni söhbət başladın.",
-      });
-    }
+    const ip = clientIp(req);
+    await enforceLimit('guest-burst', ip);
+    await enforceLimit('guest-hour', ip);
+    // Only requests passing per-IP limits consume the shared daily budget.
+    await enforceLimit('guest-day', 'all-guests');
 
     const systemInstruction = `
 ${TECGPT_SYSTEM_RULES}
@@ -322,6 +216,7 @@ ${new Date().toISOString().slice(0, 10)}
       model: usedModel,
     });
   } catch (error) {
+    if (sendSecurityError(error, res)) return;
     console.error(
       "TECGPT server error:",
       error instanceof Error

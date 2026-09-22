@@ -1,5 +1,7 @@
 /// <reference types="node" />
 
+import { clientIp, enforceLimit, validateChatRequest, sendSecurityError } from "../server/security.js";
+
 import {
   TECGPT_KNOWLEDGE,
   TECGPT_SYSTEM_RULES,
@@ -20,6 +22,7 @@ async function callGemini(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
     {
       method: "POST",
+      signal: AbortSignal.timeout(20000),
       headers: {
         "Content-Type": "application/json",
         "x-goog-api-key": geminiKey,
@@ -83,13 +86,10 @@ async function runModel(
 export default async function handler(req: any, res: any) {
   res.setHeader("Cache-Control", "no-store");
 
-  if (req.method !== "POST") {
-    return res.status(405).json({
-      error: "Method not allowed",
-    });
-  }
+  res.setHeader("X-Content-Type-Options", "nosniff");
 
   try {
+    const messages = validateChatRequest(req);
     const geminiKey = process.env.GEMINI_API_KEY;
 
     const supabaseUrl =
@@ -116,11 +116,16 @@ export default async function handler(req: any, res: any) {
       });
     }
 
+    if (authHeader.length > 8192 || !authHeader.slice(7).trim()) {
+      return res.status(401).json({ error: 'Sessiya etibarsızdır.' });
+    }
+    await enforceLimit('auth-ip', clientIp(req));
     const accessToken = authHeader.slice(7);
 
     const userResponse = await fetch(
       `${supabaseUrl}/auth/v1/user`,
       {
+        signal: AbortSignal.timeout(8000),
         headers: {
           apikey: supabaseKey,
           Authorization: `Bearer ${accessToken}`,
@@ -135,12 +140,14 @@ export default async function handler(req: any, res: any) {
     }
 
     const user = await userResponse.json();
+    if (typeof user?.id !== 'string' || !user.id) return res.status(401).json({ error: 'Sessiya etibarsızdır.' });
 
     const roleResponse = await fetch(
       `${supabaseUrl}/rest/v1/user_roles?user_id=eq.${encodeURIComponent(
         user.id
       )}&role=in.(admin,tester)&select=role&limit=1`,
       {
+        signal: AbortSignal.timeout(8000),
         headers: {
           apikey: supabaseKey,
           Authorization: `Bearer ${accessToken}`,
@@ -155,7 +162,7 @@ export default async function handler(req: any, res: any) {
     if (
       !roleResponse.ok ||
       !Array.isArray(roles) ||
-      roles.length === 0
+      !roles.some((entry: any) => entry?.role === 'admin' || entry?.role === 'tester')
     ) {
       return res.status(403).json({
         error:
@@ -163,56 +170,9 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    let body = req.body;
-
-    if (typeof body === "string") {
-      try {
-        body = JSON.parse(body);
-      } catch {
-        body = {};
-      }
-    }
-
-    let messages = Array.isArray(body?.messages)
-      ? body.messages
-          .filter(
-            (m: any) =>
-              (m?.role === "user" ||
-                m?.role === "assistant") &&
-              typeof m?.text === "string"
-          )
-          .slice(-12)
-          .map((m: any) => ({
-            role: m.role,
-            text: m.text.trim().slice(0, 4000),
-          }))
-      : [];
-
-    while (
-      messages.length &&
-      messages[0].role === "assistant"
-    ) {
-      messages.shift();
-    }
-
-    if (!messages.length) {
-      return res.status(400).json({
-        error: "Mesaj boşdur.",
-      });
-    }
-
-    const totalLength = messages.reduce(
-      (sum: number, m: any) =>
-        sum + m.text.length,
-      0
-    );
-
-    if (totalLength > 12000) {
-      return res.status(400).json({
-        error:
-          "Söhbət həddən artıq uzundur. Yeni söhbət başladın.",
-      });
-    }
+    await enforceLimit('user-minute', user.id);
+    await enforceLimit('user-hour', user.id);
+    await enforceLimit('auth-day', 'all-users');
 
     const systemInstruction = `
 ${TECGPT_SYSTEM_RULES}
@@ -322,6 +282,7 @@ ${new Date().toISOString().slice(0, 10)}
       model: usedModel,
     });
   } catch (error) {
+    if (sendSecurityError(error, res)) return;
     console.error(
       "TECGPT server error:",
       error instanceof Error
