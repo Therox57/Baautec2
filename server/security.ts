@@ -53,8 +53,9 @@ export function clientIp(req: RequestLike): string {
   const value = typeof forwarded === 'string' ? forwarded.split(',')[0].trim() : req.socket?.remoteAddress;
   return value && isIP(value) ? value : 'unknown';
 }
-type Bucket = 'guest-burst' | 'guest-hour' | 'guest-day' | 'auth-ip' | 'user-minute' | 'user-hour' | 'auth-day';
+type Bucket = 'guest-burst' | 'guest-hour' | 'guest-day' | 'auth-ip' | 'user-minute' | 'user-hour' | 'auth-day' | 'provider-day';
 const configs: Record<Bucket, { limit: number; window: '1 m' | '1 h' | '1 d'; prefix: string }> = {
+  'provider-day': { limit: 1000, window: '1 d', prefix: 'tecgpt:provider:daily-attempts' },
   'guest-burst': { limit: 10, window: '1 m', prefix: 'tecgpt:guest:minute' },
   'guest-hour': { limit: 60, window: '1 h', prefix: 'tecgpt:guest:hourly' },
   'guest-day': { limit: 1000, window: '1 d', prefix: 'tecgpt:guest:daily-global' },
