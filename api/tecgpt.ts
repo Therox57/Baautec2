@@ -1,8 +1,19 @@
+
 /// <reference types="node" />
 
-import { clientIp, enforceLimit, validateChatRequest, sendSecurityError } from "../server/security.js";
+import {
+  clientIp,
+  enforceLimit,
+  validateChatRequest,
+  sendSecurityError,
+} from "../server/security.js";
 
-import { classifyTopic, TOPIC_MESSAGE } from "../server/topic.js";
+import {
+  classifyTopic,
+  getLocalReply,
+  TOPIC_MESSAGE,
+} from "../server/topic.js";
+
 import { answerTopic } from "../server/tecgpt.js";
 
 export default async function handler(req: any, res: any) {
@@ -11,9 +22,43 @@ export default async function handler(req: any, res: any) {
   res.setHeader("X-Content-Type-Options", "nosniff");
 
   try {
+    // ==========================================
+    // MESAJLARIN YOXLANMASI
+    // ==========================================
+
     const messages = validateChatRequest(req);
+
+    // ==========================================
+    // YERLİ CAVABLAR
+    // GEMINI API İSTİFADƏ OLUNMUR
+    // ==========================================
+
+    const localReply = getLocalReply(messages);
+
+    if (localReply !== null) {
+      return res.status(200).json({
+        reply: localReply,
+        model: "local",
+      });
+    }
+
+    // ==========================================
+    // BAAU / TEC MÖVZU FİLTRİ
+    // ==========================================
+
     const topic = classifyTopic(messages);
-    if (!topic) return res.status(200).json({ reply: TOPIC_MESSAGE, model: 'local', rejected: true });
+
+    if (!topic) {
+      return res.status(200).json({
+        reply: TOPIC_MESSAGE,
+        model: "local",
+        rejected: true,
+      });
+    }
+
+    // ==========================================
+    // SERVER KONFİQURASİYASI
+    // ==========================================
 
     const geminiKey = process.env.GEMINI_API_KEY;
 
@@ -31,6 +76,10 @@ export default async function handler(req: any, res: any) {
       });
     }
 
+    // ==========================================
+    // İSTİFADƏÇİ GİRİŞİ
+    // ==========================================
+
     const authHeader = String(
       req.headers.authorization || ""
     );
@@ -41,16 +90,35 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    if (authHeader.length > 8192 || !authHeader.slice(7).trim()) {
-      return res.status(401).json({ error: 'Sessiya etibarsızdır.' });
+    if (
+      authHeader.length > 8192 ||
+      !authHeader.slice(7).trim()
+    ) {
+      return res.status(401).json({
+        error: "Sessiya etibarsızdır.",
+      });
     }
-    await enforceLimit('auth-ip', clientIp(req));
+
+    // ==========================================
+    // IP SORĞU LİMİTİ
+    // ==========================================
+
+    await enforceLimit(
+      "auth-ip",
+      clientIp(req)
+    );
+
     const accessToken = authHeader.slice(7);
+
+    // ==========================================
+    // SUPABASE İSTİFADƏÇİ YOXLAMASI
+    // ==========================================
 
     const userResponse = await fetch(
       `${supabaseUrl}/auth/v1/user`,
       {
         signal: AbortSignal.timeout(8000),
+
         headers: {
           apikey: supabaseKey,
           Authorization: `Bearer ${accessToken}`,
@@ -65,7 +133,19 @@ export default async function handler(req: any, res: any) {
     }
 
     const user = await userResponse.json();
-    if (typeof user?.id !== 'string' || !user.id) return res.status(401).json({ error: 'Sessiya etibarsızdır.' });
+
+    if (
+      typeof user?.id !== "string" ||
+      !user.id
+    ) {
+      return res.status(401).json({
+        error: "Sessiya etibarsızdır.",
+      });
+    }
+
+    // ==========================================
+    // ADMIN / TESTER ROL YOXLAMASI
+    // ==========================================
 
     const roleResponse = await fetch(
       `${supabaseUrl}/rest/v1/user_roles?user_id=eq.${encodeURIComponent(
@@ -73,6 +153,7 @@ export default async function handler(req: any, res: any) {
       )}&role=in.(admin,tester)&select=role&limit=1`,
       {
         signal: AbortSignal.timeout(8000),
+
         headers: {
           apikey: supabaseKey,
           Authorization: `Bearer ${accessToken}`,
@@ -87,7 +168,11 @@ export default async function handler(req: any, res: any) {
     if (
       !roleResponse.ok ||
       !Array.isArray(roles) ||
-      !roles.some((entry: any) => entry?.role === 'admin' || entry?.role === 'tester')
+      !roles.some(
+        (entry: any) =>
+          entry?.role === "admin" ||
+          entry?.role === "tester"
+      )
     ) {
       return res.status(403).json({
         error:
@@ -95,12 +180,34 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    await enforceLimit('user-minute', user.id);
-    await enforceLimit('user-hour', user.id);
+    // ==========================================
+    // İSTİFADƏÇİ SORĞU LİMİTLƏRİ
+    // ==========================================
 
-    return res.status(200).json(await answerTopic(topic));
+    await enforceLimit(
+      "user-minute",
+      user.id
+    );
+
+    await enforceLimit(
+      "user-hour",
+      user.id
+    );
+
+    // ==========================================
+    // REDIS CACHE + GEMINI
+    // ==========================================
+
+    return res.status(200).json(
+      await answerTopic(topic)
+    );
+
   } catch (error) {
-    if (sendSecurityError(error, res)) return;
+
+    if (sendSecurityError(error, res)) {
+      return;
+    }
+
     return res.status(500).json({
       error:
         "TECGPT serverində xəta baş verdi.",
