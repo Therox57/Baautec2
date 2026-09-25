@@ -31,7 +31,7 @@ Frontend-də yalnız publishable Supabase açarı istifadə olunur. Heç vaxt se
 
 ## TECGPT — lokal + Groq
 
-TECGPT sadə BAAU/TEC suallarını lokal bilik bazasından cavablandırır. Sərbəst və təbii BAAU/TEC sualları təhlükəsiz scope yoxlamasından sonra Groq-a göndərilə bilər.
+TECGPT BAAU/TEC mövzusunu lokal təhlükəsizlik filtri ilə yoxlayır. Salam və bəzi sadə keçid cavabları lokal qalır; digər təsdiqlənmiş BAAU/TEC söhbətləri Groq tərəfindən verified lokal faktlar əsasında təbii formada qurulur.
 
 Server environment dəyişənləri:
 
@@ -44,6 +44,6 @@ KV_REST_API_TOKEN=...
 
 `GROQ_API_KEY` heç vaxt `VITE_` prefiksi ilə frontend-ə çıxarılmamalıdır. Açar yoxdursa TECGPT lokal fallback ilə işləməyə davam edir.
 
-Sadə suallar Groq istifadə etmir. Groq hazırda yalnız sərbəst BAAU/TEC cavabları üçün istifadə olunur və provider limit/xəta zamanı lokal cavaba geri dönür.
+Groq konfiqurasiya olunubsa, normal BAAU/TEC sualları və təhlükəsiz davam mesajları Groq-a gedir. Provider limit/xəta zamanı TECGPT lokal cavaba geri dönür. Assistant tarixçəsi fakt mənbəyi kimi provider-ə ötürülmür; davam konteksti yalnız uyğun istifadəçi mesajlarından qurulur.
 
 Ətraflı təhlükəsizlik qaydaları üçün `TECGPT-GUARDRAILS.md` faylına baxın.
