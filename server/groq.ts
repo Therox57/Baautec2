@@ -131,9 +131,33 @@ function focusSourceText(
   messages: ChatMessage[],
   topic: Topic
 ): string {
-  const context = relevantUserContext(messages, topic);
+  const current = latestUserText(messages);
 
-  return context[0] ?? latestUserText(messages);
+  if (resolveSingleTopic(current)) {
+    return current;
+  }
+
+  for (const message of messages.slice(0, -1).reverse()) {
+    if (message.role !== 'user') {
+      continue;
+    }
+
+    if (isUnsafeFreeform(message.text)) {
+      break;
+    }
+
+    const previousTopic =
+      resolveSingleTopic(message.text);
+
+    if (
+      previousTopic &&
+      sameTopicFamily(previousTopic, topic)
+    ) {
+      return message.text;
+    }
+  }
+
+  return current;
 }
 
 export function getVerifiedContextForConversation(
@@ -458,12 +482,8 @@ export async function answerWithGroq(
     dependencies.fetch ?? globalThis.fetch;
 
   const currentMessage = latestUserText(messages);
-  const conversationContext =
-    relevantUserContext(messages, topic);
-  const mode =
-    conversationMode(currentMessage);
-  const responseInstruction =
-    modeInstruction(mode);
+  const transcript =
+    conversationTranscript(messages);
 
   const systemPrompt = [
     'Sən TECGPT-sən.',
@@ -517,24 +537,15 @@ export async function answerWithGroq(
               role: 'user',
               content:
                 'Mövzu: ' + topic.question + '\n\n' +
-                'RELEVANT_USER_CONTEXT:\n' +
-                conversationContext
-                  .map(
-                    (text, index) =>
-                      String(index + 1) +
-                      '. ' +
-                      text
-                  )
-                  .join('\n') +
-                '\n\nRESPONSE_INSTRUCTION:\n' +
-                responseInstruction +
+                'CONVERSATION:\n' +
+                transcript +
                 '\n\nCURRENT_MESSAGE:\n' +
                 currentMessage,
             },
           ],
-          temperature: 0.25,
+          temperature: 0.35,
           // GPT-OSS counts reasoning and final output in this same budget.
-          max_completion_tokens: 550,
+          max_completion_tokens: 650,
           ...(model.startsWith('openai/gpt-oss-')
             ? { reasoning_effort: 'low', include_reasoning: false }
             : {}),
