@@ -151,9 +151,9 @@ test('Groq yalnız təsdiqlənmiş lokal kontekstlə çağırılır', async () =
   );
   assert.equal(
     body.max_completion_tokens,
-    700
+    550
   );
-  assert.equal(body.temperature, 0);
+  assert.equal(body.temperature, 0.25);
   assert.equal(body.reasoning_effort, 'low');
   assert.equal(body.include_reasoning, false);
   assert.equal(body.stream, false);
@@ -527,10 +527,10 @@ test('Groq cavab rejimi qısa, ətraflı və mesaj follow-up-larında sərt qal�
   ];
 
   for (const [followUp, expected] of [
-    ['Bəs qısa de', /maksimum 2 qısa cümlə/i],
-    ['Daha ətraflı izah et', /maksimum 6 cümlə/i],
-    ['Dostuma göndərəcəyim formada yaz', /maksimum 4 cümlə/i],
-    ['Başqa cür de', /2-4 qısa cümlədə/i],
+    ['Bəs qısa de', /1-2 təbii, qısa cümlə/i],
+    ['Daha ətraflı izah et', /4-6 cümlə/i],
+    ['Dostuma göndərəcəyim formada yaz', /WhatsApp-da göndəriləcək kimi/i],
+    ['Başqa cür de', /daha təbii danışıq dilində 2-3 cümlə/i],
   ] as const) {
     let requestBody: any;
 
@@ -621,4 +621,73 @@ test('focused TEC fayda kontekstindən genişləndirilmiş live-preview iddialar
 
     assert.equal(result, null, reply);
   }
+});
+
+
+test('Groq promptu robotik deyil, gündəlik Azərbaycan dili tələb edir', async () => {
+  let requestBody: any;
+
+  const messages = [
+    {
+      role: 'user' as const,
+      text: 'TEC mənə nə qazandırar?',
+    },
+  ];
+
+  const topic = resolveGroqTopic(messages);
+  assert.ok(topic);
+
+  const result = await answerWithGroq(
+    messages,
+    topic,
+    {
+      apiKey: 'test-key',
+      fetch: (async (
+        _input: string | URL | Request,
+        init?: RequestInit
+      ) => {
+        requestBody = JSON.parse(
+          String(init?.body)
+        );
+
+        return Response.json({
+          choices: [
+            {
+              message: {
+                content:
+                  'Qısası, TEC elmi layihə, seminar və konfranslara yaxın olmağa kömək edir. Həm də tədqiqat bacarıqlarını inkişaf etdirmək üçün dəstək verir.',
+              },
+              finish_reason: 'stop',
+            },
+          ],
+        });
+      }) as typeof fetch,
+    }
+  );
+
+  assert.ok(result);
+
+  const system =
+    requestBody.messages[0].content;
+
+  assert.match(
+    system,
+    /gündəlik, səlis və səmimi danış/i
+  );
+  assert.match(
+    system,
+    /rəsmi arayış kimi yox/i
+  );
+  assert.match(
+    system,
+    /tam adını təkrarlama/i
+  );
+  assert.match(
+    system,
+    /bürokratik ifadələri/i
+  );
+  assert.match(
+    system,
+    /normal paraqraf daha yaxşıdır/i
+  );
 });
