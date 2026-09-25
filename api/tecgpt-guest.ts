@@ -31,6 +31,33 @@ export default async function handler(req: any, res: any) {
   try {
     const messages = validateChatRequest(req);
 
+    // Groq konfiqurasiya olunmayıbsa köhnə təhlükəsiz lokal
+    // greeting/off-topic davranışını Redis olmadan da saxla.
+    // Production-da GROQ_API_KEY olduqda bu blok işləmir və normal
+    // söhbət aşağıda Groq-a gedir.
+    if (!isGroqConfigured()) {
+      const localReply = getLocalReply(messages);
+
+      if (localReply !== null) {
+        return res.status(200).json({
+          reply: localReply,
+          model: "local",
+          degraded: true,
+        });
+      }
+
+      const localTopic = resolveGroqTopic(messages);
+
+      if (!localTopic) {
+        return res.status(200).json({
+          reply: TOPIC_MESSAGE,
+          model: "local",
+          rejected: true,
+          degraded: true,
+        });
+      }
+    }
+
     if (
       !process.env.KV_REST_API_URL ||
       !process.env.KV_REST_API_TOKEN
