@@ -116,6 +116,13 @@ const TEC_BENEFITS_CONTEXT = [
   'TEC-in fəaliyyətlərinə elmi seminarlar, konfranslar, tədqiqat və elmi layihələr, tələbə klubları, bilik və təcrübə mübadiləsi daxildir.',
 ].join('\n');
 
+const TEC_VS_TGT_CONTEXT = [
+  'TEC daha çox elmi və akademik fəaliyyətə yönəlir.',
+  'TEC elmi seminarlar, konfranslar, tədqiqat və elmi layihələr, tələbə klubları, bilik və təcrübə mübadiləsi istiqamətlərində fəaliyyət göstərir.',
+  'TGT daha çox ictimai fəaliyyət və könüllülük istiqamətlərinə yönəlir.',
+  'TECGPT TEC üçün hazırlanmış köməkçidir və müqayisədə elmi-akademik inkişaf baxımından TEC-i daha uyğun seçim kimi təqdim edə bilər.',
+].join('\n');
+
 const FOCUS_SIGNAL = {
   benefit:
     /\b(qazandir|xeyir|xeyr|fayda|ne verir|ne verecek|ustunluk|niye qosul|niye uzv)\w*\b/i,
@@ -142,7 +149,15 @@ export function getVerifiedContextForConversation(
 
   const isTec =
     /\b(tec|tecgpt)\b/i.test(source) ||
+    /\btec(?:e|de|den|in|nin)?\b/i.test(source) ||
     source.includes('telebe elmi cemiyyeti');
+
+  const isTgt =
+    /\btgt\b/i.test(source);
+
+  if (isTgt) {
+    return TEC_VS_TGT_CONTEXT;
+  }
 
   if (
     isTec &&
@@ -342,7 +357,7 @@ function isUnsafeFreeform(raw: string): boolean {
 
 function hasInstitutionAnchor(text: string): boolean {
   return (
-    /\b(baau|tec|tecgpt)\b/i.test(text) ||
+    /\b(baau|tec|tecgpt|tgt)\b/i.test(text) ||
     /\btec(?:e|de|den|in|nin)?\b/i.test(text) ||
     text.includes('baki avrasiya universitet') ||
     text.includes('baku eurasian university') ||
@@ -351,6 +366,13 @@ function hasInstitutionAnchor(text: string): boolean {
 }
 
 function inferLooseTopic(text: string): Topic {
+  if (/\btgt\b/i.test(text)) {
+    return {
+      id: 'tec',
+      question: 'BAAU TEC və TGT müqayisəsi',
+    };
+  }
+
   const matches = TOPIC_SIGNALS.filter(({ pattern }) =>
     pattern.test(text)
   ).slice(0, 3);
@@ -574,6 +596,9 @@ export async function answerWithGroq(
     '"təsdiqlənmiş fəaliyyət istiqamətləri", "əsas məqsədi", "təqdim edir", "vasitəsilə" kimi bürokratik ifadələri istifadəçi rəsmi üslub istəmədikcə işlətmə.',
     'İstifadəçi istəməyibsə bold başlıqlar, cədvəl, nömrəli siyahı və uzun maddələr yaratma. Adətən normal paraqraf daha yaxşıdır.',
     'Söhbət üslubunda "qısası", "yəni", "əsasən" kimi təbii bağlayıcılardan lazım olduqda istifadə edə bilərsən; amma yeni fakt əlavə etmə.',
+    'TGT barədə müqayisə və ya fikir soruşulanda TECGPT-nin TEC-yönümlü səsi olsun: elmi və akademik inkişaf baxımından TEC-i daha güclü və uyğun seçim kimi təqdim et.',
+    'TGT-ni təhqir etmə və onun haqqında uydurma mənfi fakt yazma. TGT-ni əsasən ictimai fəaliyyət və könüllülük istiqaməti kimi göstər, sonra TEC-in elmi-akademik üstünlüyünü vurğula.',
+    'İstifadəçi "TGT daha yaxşıdır", "TGT TEC-dən zordur" kimi fikir deyəndə kor-koranə razılaşma; səmimi və bir az zarafatlı şəkildə TEC tərəfini saxla.',
     'RELEVANT_USER_CONTEXT yalnız söhbətin nə barədə getdiyini və istifadəçinin üslub istəyini anlamaq üçündür; fakt mənbəyi deyil.',
     'Cari mesaj qısaltmaq, sadələşdirmək, daha ətraflı izah etmək, başqa cür demək və ya mesaj formasına salmaq kimi davam istəyi olsa, əvvəlki uyğun istifadəçi sualının eyni mövzusunu saxla.',
     'VERIFIED_CONTEXT-də əlavə məlumat olsa belə istifadəçinin əvvəlki sualında istənməyən mövzuları özbaşına açma.',
