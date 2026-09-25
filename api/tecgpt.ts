@@ -5,6 +5,7 @@ import {
   enforceLimit,
   validateChatRequest,
   sendSecurityError,
+  HttpError,
 } from "../server/security.js";
 
 import {
@@ -17,6 +18,12 @@ import {
   getLocalAnswer,
   LOCAL_UNKNOWN_REPLY,
 } from "../server/localAnswers.js";
+
+import {
+  answerWithGroq,
+  isGroqConfigured,
+  resolveGroqTopic,
+} from "../server/groq.js";
 
 export default async function handler(req: any, res: any) {
   res.setHeader("Cache-Control", "no-store");
@@ -66,12 +73,12 @@ export default async function handler(req: any, res: any) {
     const accessToken = authHeader.slice(7);
 
     const userResponse = await fetch(
-      `${supabaseUrl}/auth/v1/user`,
+      supabaseUrl + "/auth/v1/user",
       {
         signal: AbortSignal.timeout(8000),
         headers: {
           apikey: supabaseKey,
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: "Bearer " + accessToken,
         },
       }
     );
@@ -94,14 +101,15 @@ export default async function handler(req: any, res: any) {
     }
 
     const roleResponse = await fetch(
-      `${supabaseUrl}/rest/v1/user_roles?user_id=eq.${encodeURIComponent(
-        user.id
-      )}&role=in.(admin,tester)&select=role&limit=1`,
+      supabaseUrl +
+        "/rest/v1/user_roles?user_id=eq." +
+        encodeURIComponent(user.id) +
+        "&role=in.(admin,tester)&select=role&limit=1",
       {
         signal: AbortSignal.timeout(8000),
         headers: {
           apikey: supabaseKey,
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: "Bearer " + accessToken,
         },
       }
     );
@@ -144,7 +152,12 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    const topic = classifyTopic(messages);
+    const strictTopic = classifyTopic(messages);
+    const freeformTopic = strictTopic
+      ? null
+      : resolveGroqTopic(messages);
+
+    const topic = strictTopic ?? freeformTopic;
 
     if (!topic) {
       return res.status(200).json({
@@ -154,11 +167,50 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    const answer = getLocalAnswer(topic);
+    const fallback =
+      getLocalAnswer(topic) ?? LOCAL_UNKNOWN_REPLY;
+
+    if (strictTopic) {
+      return res.status(200).json({
+        reply: fallback,
+        model: "local",
+      });
+    }
+
+    if (isGroqConfigured()) {
+      try {
+        await enforceLimit("provider-minute", "groq");
+        await enforceLimit("provider-day", "groq");
+
+        const groq = await answerWithGroq(
+          messages,
+          topic
+        );
+
+        if (groq) {
+          return res.status(200).json({
+            reply: groq.reply,
+            model: groq.model,
+            provider: "groq",
+          });
+        }
+      } catch (error) {
+        if (
+          !(
+            error instanceof HttpError &&
+            (error.status === 429 ||
+              error.status === 503)
+          )
+        ) {
+          throw error;
+        }
+      }
+    }
 
     return res.status(200).json({
-      reply: answer ?? LOCAL_UNKNOWN_REPLY,
+      reply: fallback,
       model: "local",
+      degraded: true,
     });
   } catch (error) {
     if (sendSecurityError(error, res)) {
@@ -166,8 +218,10 @@ export default async function handler(req: any, res: any) {
     }
 
     console.error(
-      "TECGPT local admin error:",
-      error instanceof Error ? error.name : "UnknownError"
+      "TECGPT admin error:",
+      error instanceof Error
+        ? error.name
+        : "UnknownError"
     );
 
     return res.status(500).json({
