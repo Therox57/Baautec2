@@ -151,8 +151,9 @@ test('Groq yalnız təsdiqlənmiş lokal kontekstlə çağırılır', async () =
   );
   assert.equal(
     body.max_completion_tokens,
-    1200
+    700
   );
+  assert.equal(body.temperature, 0);
   assert.equal(body.reasoning_effort, 'low');
   assert.equal(body.include_reasoning, false);
   assert.equal(body.stream, false);
@@ -513,5 +514,111 @@ test('focused TEC context-də olmayan konkret imkan yazılsa Groq cavabı rədd 
       null,
       reply
     );
+  }
+});
+
+
+test('Groq cavab rejimi qısa, ətraflı və mesaj follow-up-larında sərt qalır', async () => {
+  const base = [
+    {
+      role: 'user' as const,
+      text: 'TEC mənə nə qazandırar?',
+    },
+  ];
+
+  for (const [followUp, expected] of [
+    ['Bəs qısa de', /maksimum 2 qısa cümlə/i],
+    ['Daha ətraflı izah et', /maksimum 6 cümlə/i],
+    ['Dostuma göndərəcəyim formada yaz', /maksimum 4 cümlə/i],
+    ['Başqa cür de', /2-4 qısa cümlədə/i],
+  ] as const) {
+    let requestBody: any;
+
+    const messages = [
+      ...base,
+      {
+        role: 'user' as const,
+        text: followUp,
+      },
+    ];
+
+    const topic = resolveGroqTopic(messages);
+    assert.ok(topic, followUp);
+
+    const result = await answerWithGroq(
+      messages,
+      topic,
+      {
+        apiKey: 'test-key',
+        fetch: (async (
+          _input: string | URL | Request,
+          init?: RequestInit
+        ) => {
+          requestBody = JSON.parse(
+            String(init?.body)
+          );
+
+          return Response.json({
+            choices: [
+              {
+                message: {
+                  content:
+                    'TEC elmi-tədqiqat fəaliyyətinə və akademik inkişafa dəstək verir.',
+                },
+                finish_reason: 'stop',
+              },
+            ],
+          });
+        }) as typeof fetch,
+      }
+    );
+
+    assert.ok(result, followUp);
+
+    assert.match(
+      requestBody.messages[1].content,
+      expected,
+      followUp
+    );
+  }
+});
+
+test('focused TEC fayda kontekstindən genişləndirilmiş live-preview iddiaları rədd edilir', async () => {
+  const messages = [
+    {
+      role: 'user' as const,
+      text: 'TEC mənə nə qazandırar?',
+    },
+  ];
+
+  const topic = resolveGroqTopic(messages);
+  assert.ok(topic);
+
+  for (const reply of [
+    'TEC akademik şəbəkəni genişləndirir və gələcək karyera üçün faydalıdır.',
+    'Mütəxəssislərlə sual-cavab sessiyalarında iştirak edə bilərsən.',
+    'Peşəkarlar və məzunlarla əlaqə qurub komanda işini öyrənə bilərsən.',
+    'Xarici universitetlərlə beynəlxalq proqramlara qoşulmaq mümkündür.',
+  ]) {
+    const result = await answerWithGroq(
+      messages,
+      topic,
+      {
+        apiKey: 'test-key',
+        fetch: (async () =>
+          Response.json({
+            choices: [
+              {
+                message: {
+                  content: reply,
+                },
+                finish_reason: 'stop',
+              },
+            ],
+          })) as typeof fetch,
+      }
+    );
+
+    assert.equal(result, null, reply);
   }
 });
