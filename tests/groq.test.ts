@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  answerConversationWithGroq,
   answerWithGroq,
   getVerifiedContextForConversation,
   resolveGroqTopic,
@@ -869,4 +870,167 @@ test('təbii follow-up xüsusi regex olmadan əvvəlki TEC mövzusunu daşıyır
 
   assert.ok(topic);
   assert.match(topic.id, /student-life/);
+});
+
+
+test('əsas chat yolu bütün verified knowledge və real söhbət konteksti ilə Groq-a gedir', async () => {
+  let body: any;
+
+  const messages = [
+    {
+      role: 'user' as const,
+      text: 'TEC-ə girməyə dəyər?',
+    },
+    {
+      role: 'assistant' as const,
+      text: 'Əvvəlki cavab.',
+    },
+    {
+      role: 'user' as const,
+      text: 'yox e mən onu demirəm, səncə girim ya yox?',
+    },
+  ];
+
+  const result = await answerConversationWithGroq(
+    messages,
+    {
+      apiKey: 'test-key',
+      model: 'openai/gpt-oss-20b',
+      fetch: (async (
+        _input: string | URL | Request,
+        init?: RequestInit
+      ) => {
+        body = JSON.parse(String(init?.body));
+
+        return Response.json({
+          choices: [
+            {
+              message: {
+                content:
+                  'Elmi tərəf sənə maraqlıdırsa, məncə TEC-ə qoşulmağa dəyər.',
+              },
+              finish_reason: 'stop',
+            },
+          ],
+        });
+      }) as typeof fetch,
+    }
+  );
+
+  assert.ok(result);
+  assert.equal(body.temperature, 0.4);
+  assert.equal(
+    body.max_completion_tokens,
+    1000
+  );
+  assert.equal(
+    body.reasoning_effort,
+    'medium'
+  );
+  assert.equal(
+    body.include_reasoning,
+    false
+  );
+
+  const system =
+    body.messages[0].content;
+
+  assert.match(
+    system,
+    /FAQ menyusu və ya açar-söz botu deyilsən/i
+  );
+  assert.match(
+    system,
+    /VERIFIED_KNOWLEDGE/
+  );
+  assert.match(
+    system,
+    /TƏLƏBƏ GƏNCLƏR TƏŞKİLATI/i
+  );
+  assert.match(
+    system,
+    /https:\/\/baautec\.vercel\.app/
+  );
+
+  assert.equal(
+    body.messages[1].role,
+    'user'
+  );
+  assert.equal(
+    body.messages[2].role,
+    'assistant'
+  );
+  assert.equal(
+    body.messages[3].content,
+    'yox e mən onu demirəm, səncə girim ya yox?'
+  );
+});
+
+test('əsas chat yolu sərbəst yazı tərzini phrase mapping olmadan qəbul edir', async () => {
+  const variants = [
+    'ala men ne bilim e sən olsan girərdin?',
+    'hə onu boş ver, mənə adam kimi de də',
+    'mence tgt daha zordu e',
+    'tec yoxsa tgt, qısa de görüm',
+  ];
+
+  for (const text of variants) {
+    const result = await answerConversationWithGroq(
+      [
+        {
+          role: 'user',
+          text: 'TEC haqqında danışırıq.',
+        },
+        {
+          role: 'user',
+          text,
+        },
+      ],
+      {
+        apiKey: 'test-key',
+        fetch: (async () =>
+          Response.json({
+            choices: [
+              {
+                message: {
+                  content:
+                    'Elmi-akademik tərəfdirsə, TEC daha uyğun seçimdir.',
+                },
+                finish_reason: 'stop',
+              },
+            ],
+          })) as typeof fetch,
+      }
+    );
+
+    assert.ok(result, text);
+  }
+});
+
+test('əsas chat yolu knowledge bazasında olmayan URL-ni qəbul etmir', async () => {
+  const result = await answerConversationWithGroq(
+    [
+      {
+        role: 'user',
+        text: 'TEC haqqında məlumat ver',
+      },
+    ],
+    {
+      apiKey: 'test-key',
+      fetch: (async () =>
+        Response.json({
+          choices: [
+            {
+              message: {
+                content:
+                  'Bax: https://example.com',
+              },
+              finish_reason: 'stop',
+            },
+          ],
+        })) as typeof fetch,
+    }
+  );
+
+  assert.equal(result, null);
 });
