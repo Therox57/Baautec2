@@ -9,7 +9,6 @@ import {
 } from "../server/security.js";
 
 import {
-  classifyTopic,
   getLocalReply,
   TOPIC_MESSAGE,
 } from "../server/topic.js";
@@ -41,12 +40,7 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    const strictTopic = classifyTopic(messages);
-    const freeformTopic = strictTopic
-      ? null
-      : resolveGroqTopic(messages);
-
-    const topic = strictTopic ?? freeformTopic;
+    const topic = resolveGroqTopic(messages);
 
     if (!topic) {
       return res.status(200).json({
@@ -73,15 +67,8 @@ export default async function handler(req: any, res: any) {
     const fallback =
       getLocalAnswer(topic) ?? LOCAL_UNKNOWN_REPLY;
 
-    // Dəqiq və sadə BAAU/TEC sualları Groq xərcləmir.
-    if (strictTopic) {
-      return res.status(200).json({
-        reply: fallback,
-        model: "local",
-      });
-    }
-
-    // Sərbəst BAAU/TEC sualları üçün Groq istifadə olunur.
+    // BAAU/TEC daxilində normal cavabı Groq qurur.
+    // Salam/link kimi çox sadə lokal cavablar yuxarıda tutulur.
     // Groq unavailable/limit olduqda yerli cavab qalır.
     if (isGroqConfigured()) {
       try {
