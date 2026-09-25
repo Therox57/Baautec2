@@ -14,7 +14,7 @@ const DEFAULT_MODEL = 'openai/gpt-oss-20b';
 const BLOCKED_PATTERNS = [
   /\b(ignore|previous instructions?|system prompt|developer message|jailbreak)\b/i,
   /\b(api[ -]?key|secret|token|password|parol|sifre|şifre)\b/i,
-  /\b(telefon|phone|e-?mail|email)\b/i,
+  /\b(telefon\w*|phone\w*|e-?mail\w*|email\w*)\b/i,
   /\b(malware|virus|phishing|hack|exploit)\b/i,
   /\b(bitcoin|crypto|kriptovalyuta|hava|weather|resept|recipe|gta|film|movie|mahn[iı]|song)\b/i,
   /\b(kod\w*|code)\s+(yaz|write)\b/i,
@@ -52,7 +52,7 @@ const TOPIC_SIGNALS: Array<{
   {
     id: 'student-life',
     pattern:
-      /\b(telebe heyati|heyat|faaliyyet|aktiv|qazandir|xeyir|fayda|ustunluk)\w*\b/i,
+      /\b(telebe heyati|heyat|faaliyyet|aktiv|qazandir|xeyir|xeyr|fayda|ustunluk)\w*\b/i,
     question:
       'BAAU-da tələbə həyatı və TEC-in tələbəyə verə biləcəyi imkanlar',
   },
