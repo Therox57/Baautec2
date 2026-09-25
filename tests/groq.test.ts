@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   answerWithGroq,
+  getVerifiedContextForConversation,
   resolveGroqTopic,
 } from '../server/groq.js';
 
@@ -379,6 +380,138 @@ test('təbii davam ifadələri əvvəlki BAAU/TEC mövzusunu saxlayır', () => {
       topic?.id,
       'membership',
       followUp
+    );
+  }
+});
+
+
+test('TEC fayda sualı focus-based kontekstdə student-life və TGT-yə genişlənmir', () => {
+  const messages = [
+    {
+      role: 'user' as const,
+      text:
+        'TEC mənə nə qazandırar? Rəsmi danışma.',
+    },
+  ];
+
+  const topic = resolveGroqTopic(messages);
+
+  assert.ok(topic);
+
+  const context =
+    getVerifiedContextForConversation(
+      messages,
+      topic
+    );
+
+  assert.ok(context);
+  assert.match(
+    context,
+    /elmi-tədqiqat və praktiki fəaliyyət/i
+  );
+  assert.match(
+    context,
+    /elmi seminarlar/i
+  );
+  assert.doesNotMatch(
+    context,
+    /TGT|könüllülük|idman|intellektual yarış/i
+  );
+});
+
+test('TEC fayda follow-up-ları eyni dar verified context-i saxlayır', () => {
+  const base = [
+    {
+      role: 'user' as const,
+      text:
+        'TEC mənə nə qazandırar? Rəsmi danışma.',
+    },
+  ];
+
+  const firstTopic = resolveGroqTopic(base);
+
+  assert.ok(firstTopic);
+
+  const firstContext =
+    getVerifiedContextForConversation(
+      base,
+      firstTopic
+    );
+
+  for (const followUp of [
+    'Bəs qısa de',
+    'Daha ətraflı izah et',
+    'Başqa cür de',
+    'Dostuma göndərəcəyim formada yaz',
+  ]) {
+    const messages = [
+      ...base,
+      {
+        role: 'assistant' as const,
+        text: 'Əvvəlki cavab',
+      },
+      {
+        role: 'user' as const,
+        text: followUp,
+      },
+    ];
+
+    const topic = resolveGroqTopic(messages);
+
+    assert.ok(topic, followUp);
+
+    assert.equal(
+      getVerifiedContextForConversation(
+        messages,
+        topic
+      ),
+      firstContext,
+      followUp
+    );
+  }
+});
+
+test('focused TEC context-də olmayan konkret imkan yazılsa Groq cavabı rədd edilir', async () => {
+  const messages = [
+    {
+      role: 'user' as const,
+      text:
+        'TEC mənə nə qazandırar? Rəsmi danışma.',
+    },
+  ];
+
+  const topic = resolveGroqTopic(messages);
+
+  assert.ok(topic);
+
+  for (const reply of [
+    'TEC sənə mentor dəstəyi və sertifikat verir.',
+    'TEC-də kodlaşdırma və fizika yarışlarına qoşula bilərsən.',
+    'TEC könüllülük və idman imkanları da yaradır.',
+  ]) {
+    const result = await answerWithGroq(
+      messages,
+      topic,
+      {
+        apiKey: 'test-key',
+        fetch: (async () =>
+          Response.json({
+            choices: [
+              {
+                message: {
+                  content: reply,
+                },
+                finish_reason: 'stop',
+              },
+            ],
+          })) as typeof fetch,
+      }
+    );
+
+    assert.equal(
+      result,
+      null,
+      reply
     );
   }
 });
