@@ -9,7 +9,6 @@ import {
 } from "../server/security.js";
 
 import {
-  classifyTopic,
   getLocalReply,
   TOPIC_MESSAGE,
 } from "../server/topic.js";
@@ -152,12 +151,7 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    const strictTopic = classifyTopic(messages);
-    const freeformTopic = strictTopic
-      ? null
-      : resolveGroqTopic(messages);
-
-    const topic = strictTopic ?? freeformTopic;
+    const topic = resolveGroqTopic(messages);
 
     if (!topic) {
       return res.status(200).json({
@@ -169,13 +163,6 @@ export default async function handler(req: any, res: any) {
 
     const fallback =
       getLocalAnswer(topic) ?? LOCAL_UNKNOWN_REPLY;
-
-    if (strictTopic) {
-      return res.status(200).json({
-        reply: fallback,
-        model: "local",
-      });
-    }
 
     if (isGroqConfigured()) {
       try {
