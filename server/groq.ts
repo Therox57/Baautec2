@@ -20,9 +20,6 @@ const BLOCKED_PATTERNS = [
   /\b(kod\w*|code)\s+(yaz|write)\b/i,
 ];
 
-const CONTINUATION_HINT =
-  /\b(bes|bunu|onu|qisa|qisaca|qisalt|sade|etrafli|daha|bir az|basqa cur|dostuma|qrupa|formada|cumle|resmi|semimi|sence|mence|niye|nece|girim|qosulum|uzv olum|qeydiyyatdan kecim)\b/i;
-
 const TOPIC_SIGNALS: Array<{
   id: string;
   pattern: RegExp;
@@ -241,82 +238,6 @@ function containsUnsupportedDetail(
   });
 }
 
-type ConversationMode =
-  | 'default'
-  | 'short'
-  | 'detailed'
-  | 'rephrase'
-  | 'message';
-
-function conversationMode(
-  text: string
-): ConversationMode {
-  const normalized = normalizedForRouting(text);
-
-  if (
-    /\b(qisa|qisaca|qisalt)\b/i.test(normalized)
-  ) {
-    return 'short';
-  }
-
-  if (
-    /\b(etrafli|daha etrafli|bir az etrafli)\b/i.test(normalized)
-  ) {
-    return 'detailed';
-  }
-
-  if (
-    /\b(dostuma|qrupa|gondereceyim|mesaj formasinda|formada yaz)\b/i.test(normalized)
-  ) {
-    return 'message';
-  }
-
-  if (
-    /\b(basqa cur|yeniden de|ferqli de)\b/i.test(normalized)
-  ) {
-    return 'rephrase';
-  }
-
-  return 'default';
-}
-
-function modeInstruction(
-  mode: ConversationMode
-): string {
-  switch (mode) {
-    case 'short':
-      return (
-        'Cavabı 1-2 təbii, qısa cümlə ilə ver. ' +
-        'Başlıq, siyahı və rəsmi giriş yazma.'
-      );
-
-    case 'detailed':
-      return (
-        'Eyni faktları daha aydın və söhbət dilində 4-6 cümlə ilə izah et. ' +
-        'Yeni nümunə, nəticə, üstünlük və ya imkan icad etmə. ' +
-        'Başlıq və siyahı yaratma.'
-      );
-
-    case 'message':
-      return (
-        'Eyni faktları dosta WhatsApp-da göndəriləcək kimi səmimi və normal mesaj formasında yaz. ' +
-        'Başlıq, cədvəl, siyahı və rəsmi ifadələr işlətmə. 2-4 cümlə kifayətdir.'
-      );
-
-    case 'rephrase':
-      return (
-        'Eyni faktları başqa sözlərlə, daha təbii danışıq dilində 2-3 cümlə ilə de. ' +
-        'Yeni fakt və nümunə əlavə etmə.'
-      );
-
-    default:
-      return (
-        'Suala birbaşa cavab ver. 2-4 təbii cümlə kifayətdir; ' +
-        'istifadəçi istəməyibsə başlıq, nömrələmə və uzun siyahı yaratma.'
-      );
-  }
-}
-
 export type GroqResult = {
   reply: string;
   model: string;
@@ -410,15 +331,6 @@ function resolveAnchoredText(raw: string): Topic | null {
   return inferLooseTopic(text);
 }
 
-function isContinuation(text: string): boolean {
-  const normalized = normalizedForRouting(text);
-
-  return (
-    normalized.length <= 180 &&
-    CONTINUATION_HINT.test(normalized)
-  );
-}
-
 function resolveSingleTopic(raw: string): Topic | null {
   if (isUnsafeFreeform(raw)) {
     return null;
@@ -432,57 +344,26 @@ function resolveSingleTopic(raw: string): Topic | null {
 
 function sameTopicFamily(a: Topic, b: Topic): boolean {
   const aIds = new Set(a.id.split('+'));
+
   return b.id
     .split('+')
     .some(id => aIds.has(id));
 }
 
-function relevantUserContext(
-  messages: ChatMessage[],
-  topic: Topic
-): string[] {
-  const current = latestUserText(messages);
+function conversationTranscript(
+  messages: ChatMessage[]
+): string {
+  return messages
+    .slice(-8)
+    .map(message => {
+      const label =
+        message.role === 'user'
+          ? 'USER'
+          : 'ASSISTANT_CONTEXT_ONLY';
 
-  // A new anchored question stands on its own. We only carry earlier
-  // user wording when the current message is clearly conversational.
-  if (!isContinuation(current)) {
-    return [current];
-  }
-
-  const collected: string[] = [current];
-
-  for (
-    const message of messages.slice(0, -1).reverse()
-  ) {
-    if (message.role !== 'user') {
-      continue;
-    }
-
-    if (isUnsafeFreeform(message.text)) {
-      break;
-    }
-
-    if (isContinuation(message.text)) {
-      collected.push(message.text);
-      continue;
-    }
-
-    const previousTopic =
-      resolveSingleTopic(message.text);
-
-    if (
-      previousTopic &&
-      sameTopicFamily(previousTopic, topic)
-    ) {
-      collected.push(message.text);
-    }
-
-    break;
-  }
-
-  return collected
-    .reverse()
-    .slice(-5);
+      return label + ': ' + message.text;
+    })
+    .join('\n');
 }
 
 export function resolveGroqTopic(
@@ -500,19 +381,23 @@ export function resolveGroqTopic(
     return direct;
   }
 
-  if (!isContinuation(raw)) {
-    return null;
+  for (const previous of messages.slice(0, -1).reverse()) {
+    if (previous.role !== 'user') {
+      continue;
+    }
+
+    if (isUnsafeFreeform(previous.text)) {
+      return null;
+    }
+
+    const topic =
+      resolveSingleTopic(previous.text);
+
+    if (topic) {
+      return topic;
+    }
   }
 
-  // Only recognized follow-ups may bridge turns. Unrelated/unsafe user text
-  // breaks the chain, and assistant messages never authorize a topic.
-  for (const previous of messages.slice(0, -1).reverse()) {
-    if (previous.role !== 'user') continue;
-    if (isUnsafeFreeform(previous.text)) return null;
-    const topic = resolveSingleTopic(previous.text);
-    if (topic) return topic;
-    if (!isContinuation(previous.text)) return null;
-  }
   return null;
 }
 
