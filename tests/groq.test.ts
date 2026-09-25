@@ -165,7 +165,7 @@ test('Groq yalnız təsdiqlənmiş lokal kontekstlə çağırılır', async () =
   );
   assert.match(
     body.messages[0].content,
-    /Tələbə Elmi Cəmiyyətidir/
+    /tələbələrin elmi fəaliyyətinə yönələn tələbə qurumudur/i
   );
 });
 
