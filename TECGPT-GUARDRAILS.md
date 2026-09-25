@@ -1,27 +1,104 @@
 # TECGPT backend qoruması
 
-Əsas: `Therox57/Baautec2`, `origin/main` commit `72e6795`. `origin/tecgpt-beta` bu commit-dən köhnədir. İş branch-i: `tecgpt-guardrails`.
+İş branch-i: `tecgpt-local-ai`
 
-## Davranış
+TECGPT hazırda hibrid arxitekturaya keçir:
 
-- `/api/tecgpt` və `/api/tecgpt-guest` eyni mövzu filtrindən və Gemini xidmətindən istifadə edir.
-- Son mesaj məhdud, yoxlanmış sözlük ilə standart BAAU/TEC mövzusuna çevrilir. Naməlum sözlər, kod, qarışıq mövzudan kənar istəklər və gizli Unicode simvolları yerli izahla rədd edilir. Rədd cavabı mövcud chat interfeysi ilə uyğun `200 {reply, model: 'local', rejected: true}` formatındadır.
-- İstifadəçi mesajı və müştərinin göndərdiyi assistant tarixçəsi Gemini-yə ötürülmür. Bu, prompt injection üçün əsas giriş yolunu bağlayır. Filtr semantik süni intellekt deyil: bəzi düzgün, lakin tanınmayan ifadələr də rədd edilə bilər. Sözlük yeni test nümunələri ilə genişləndirilməlidir. Azərbaycan və məhdud ingilis ifadələri qəbul edilir, cavab Azərbaycan dilindədir. Kontekstdən asılı “bəs necə?” tipli davam sualı açıq mövzu ilə yenidən yazılmalıdır.
-- Əvvəlki Supabase istifadəçi/rol yoxlamaları və IP/user limitləri saxlanılıb. Rədd edilən mövzu üçün yalnız sabit ictimai izah qaytarılır, autentifikasiya və xarici xidmət çağırılmır. Keçərli suallar üçün cache hit də daxil olmaqla əvvəlki IP/user limitləri işləyir.
-- Qonaq: 10/dəqiqə, 60/saat; giriş IP-si: 60/dəqiqə; istifadəçi: 20/dəqiqə, 200/saat. Əvvəlki ayrı gündəlik request sayğacları əvəzinə bütün istifadəçilər və endpoint-lər üçün 1000/gün Gemini cəhd büdcəsi tətbiq olunur. Retry və fallback də ayrıca sayılır. Bu rəqəm Google layihəsinin real kvotasına uyğun tənzimlənməlidir.
-- Redis cache TTL 300 saniyədir; açar bilik bazası, qaydalar, kanonik mövzu və model parametrlərindən asılıdır. Yalnız standart ictimai cavab saxlanılır, fərdi sual/tarixçə saxlanılmır. Xətalar və yarımçıq cavab cache edilmir. Bilik bazası dəyişəndə əvvəlki cavablar istifadə edilmir.
-- Paralel eyni suallar Redis `SET NX` kilidi ilə məhdudlaşdırılır, kilid yalnız sahibi tərəfindən silinir. TTL 40 saniyədir. Redis işləmirsə yeni Gemini sorğusu göndərilmir.
-- Hər Gemini cəhdi 6.5 saniyə timeout: əsas model maksimum iki dəfə, müvəqqəti xətalar davam edərsə fallback bir dəfə. Artan gecikmə və təsadüfi kiçik əlavə tətbiq edilir. 400/401/403/404, boş və bloklanmış cavablar təkrarlanmır.
-- 429 halında əlavə model çağırılmır; Retry-After əsasında 60–3600 saniyə ümumi fasilə, digər uğursuz nəticədə 15 saniyə fasilə qoyulur. Cache-dəki uğurlu cavablar fasilədə də işləyir. Fallback mətnində rəsmi ünvanlar verilir; bu cavab AI fakt cavabı kimi göstərilmir (`degraded: true`).
+- dəqiq və sadə BAAU/TEC sualları yerli cavab bazasından cavablanır;
+- sərbəst və təbii BAAU/TEC sualları təhlükəsiz scope yoxlamasından sonra Groq-a göndərilə bilər;
+- Groq işləməsə, limitə düşsə və ya cavab etibarsız sayılsa yerli fallback cavabı istifadə olunur.
 
-## Konfiqurasiya və yoxlama
+## Mövzu sərhədi
 
-Yeni paket lazım deyil. Mövcud server dəyişənləri: `GEMINI_API_KEY`, `KV_REST_API_URL`, `KV_REST_API_TOKEN` və mövcud Supabase URL/publishable key. Heç bir secret frontend dəyişəninə yazılmamalıdır. İstəyə bağlı `GEMINI_MODEL` və `GEMINI_FALLBACK_MODEL` mövcud model adlarını əvəz edir. Default model adları işləyən koddan saxlanılıb; bu işdə canlı model əlçatanlığı sınaqdan keçirilməyib.
+TECGPT yalnız Bakı Avrasiya Universiteti (BAAU) və BAAU Tələbə Elmi Cəmiyyəti (TEC) haqqında cavab verməlidir.
 
-`npm ci --ignore-scripts`, `npm run test:security`, `npm run build`.
+Sadə suallar üçün `classifyTopic()` sərt lokal filtr kimi qalır. Bu filtr tanınmış BAAU/TEC mövzularını qəbul edir və əlaqəsiz, qarışıq, injection, gizli Unicode və şəxsi məlumat sorğularını yerli şəkildə rədd edir.
 
-13 test keçdi: mövzu nümunələri, injection/Unicode/şəxsi məlumat istəkləri, hər iki endpoint-də şəbəkəsiz rədd, saxta tarixçə, cache və model açarı, retry/backoff/fallback, 429 fasiləsi, boş/permanent xəta, bağlı Redis, büdcə və paralel kilid; əvvəlki dörd təhlükəsizlik testi də daxildir. Xarici xidmətlər testlərdə əvəzlənib. Canlı Redis, Supabase və Gemini inteqrasiyası və production deploy bu işdə edilməyib. Build keçdi.
+Sərbəst danışıq üçün `resolveGroqTopic()` ayrıca məhdudlaşdırılmış yol açır:
 
-Deploy-dan əvvəl staging-də mövcud giriş/rol, Redis limitləri, normal BAAU sualı, təkrar sual və əlaqəsiz sual yoxlanmalıdır. Redis backend açarları yalnız etibarlı server xidmətləri üçün olmalıdır. Dəyişiklik API xərclərini azaldır, sıfır xərc və ya heç vaxt xəta olmaması zəmanəti vermir.
+- son mesajda açıq BAAU/TEC anchor-u olmalıdır; və ya
+- yalnız qısa, əvvəlki tanınmış BAAU/TEC mövzusuna aid davam ifadələri qəbul edilir;
+- davam konteksti yalnız əvvəlki istifadəçi mesajından götürülür, client-in göndərdiyi assistant tarixçəsi etibar mənbəyi deyil;
+- prompt injection, sistem promptu, API key/token/parol, telefon/e-mail, malware/hack, açıq off-topic və kod yazma tipli istəklər provider-ə buraxılmır.
 
-Texniki istinadlar: https://ai.google.dev/gemini-api/docs/troubleshooting və https://supabase.com/docs/reference/javascript/auth-getuser .
+## Groq istifadəsi
+
+Default model:
+
+`openai/gpt-oss-20b`
+
+Endpoint:
+
+`https://api.groq.com/openai/v1/chat/completions`
+
+Groq-a tam TECGPT bilik bazası və ya sərbəst sistem məlumatı göndərilmir. Cari implementasiyada yalnız `getLocalAnswer(topic)` ilə seçilmiş təsdiqlənmiş BAAU/TEC konteksti provider promptuna daxil edilir.
+
+Provider qaydaları:
+
+- yalnız `VERIFIED_CONTEXT` fakt mənbəyidir;
+- modeldən həmin kontekstdən kənar fakt əlavə etməmək tələb olunur;
+- browser search və başqa tool verilmir;
+- yeni URL uydurmaq qadağandır;
+- cavabda kontekstdə olmayan URL aşkarlanarsa cavab qəbul edilmir və lokal fallback işləyir;
+- cavab boş, həddən artıq uzun və ya provider xətalı olarsa lokal fallback işləyir;
+- Groq üçün ayrıca retry yoxdur; burst və xərci böyütməmək üçün bir provider cəhdi edilir.
+
+## Limitlər
+
+İstifadəçi limitləri:
+
+- qonaq: 10/dəqiqə, 60/saat;
+- giriş IP-si: 60/dəqiqə;
+- giriş etmiş istifadəçi: 20/dəqiqə, 200/saat.
+
+Groq Free üçün əlavə qlobal qoruma:
+
+- provider: 6 sərbəst sorğu/dəqiqə;
+- provider: 900 sərbəst sorğu/gün.
+
+Bu limitlər Groq-un pulsuz planındakı request və token limitlərinə ehtiyat payı saxlamaq üçündür. Provider limiti dolanda istifadəçiyə 429 göstərmək əvəzinə mümkün olduqda yerli BAAU/TEC cavabı qaytarılır.
+
+## Admin endpoint
+
+`/api/tecgpt` əvvəlcə Bearer tokeni, Supabase istifadəçisini və `admin` / `tester` rolunu yoxlayır. Girişsiz istifadəçi hətta lokal salamlaşma cavabı da ala bilmir.
+
+`/api/tecgpt-guest` ictimai endpoint-dir, amma request validation, mövzu filtri və Redis limitləri saxlanılır.
+
+## Konfiqurasiya
+
+Server dəyişənləri:
+
+- `GROQ_API_KEY` — sərbəst cavabları aktiv edir;
+- `GROQ_MODEL` — istəyə bağlı model override;
+- `KV_REST_API_URL`;
+- `KV_REST_API_TOKEN`;
+- mövcud Supabase URL və publishable key dəyişənləri.
+
+`GROQ_API_KEY` frontend dəyişəni olmamalıdır və repository-yə yazılmamalıdır.
+
+Əgər `GROQ_API_KEY` yoxdursa TECGPT tam dayanmaz; sərbəst suallar da mümkün olduqda lokal fallback ilə cavablanır.
+
+## Yoxlama
+
+Əsas yoxlamalar:
+
+```bash
+npm ci --ignore-scripts
+npm audit --audit-level=high
+npm run test:security
+npm run build
+```
+
+Testlər aşağıdakıları əhatə edir:
+
+- BAAU/TEC scope qəbul və rədd nümunələri;
+- injection, private-data və off-topic qoruması;
+- saxta assistant tarixçəsinin yeni mövzu açmaması;
+- lokal üzvlük və link davamı;
+- admin girişsiz cavab verməməsi;
+- sərbəst TEC sualının Groq route-a çevrilməsi;
+- əvvəlki istifadəçi mesajından təhlükəsiz follow-up;
+- Groq request-in yalnız verified local context istifadə etməsi;
+- 429 və etibarsız URL zamanı lokal fallback.
+
+Production deploy-dan əvvəl canlı Supabase, Redis və Groq inteqrasiyası preview/staging mühitində ayrıca yoxlanmalıdır.
