@@ -255,3 +255,20 @@ test('empty and truncated Groq replies fall back without displaying reasoning', 
     assert.equal(result,null);
   }
 });
+
+
+test('verified URLs tolerate punctuation and a root slash but not new destinations', async () => {
+  for (const [reply, accepted] of [
+    ['Buyur: https://baautec.vercel.app.', true],
+    ['[Üzvlük](https://baautec.vercel.app/)', true],
+    ['Buyur: https://baautec.vercel.app.evil.example', false],
+    ['Buyur: https://baautec.vercel.app/new-path', false],
+    ['Buyur: https://baautec.vercel.app@evil.example', false],
+    ['Buyur: https://example.com', false],
+  ] as const) {
+    const result = await answerWithGroq([{role:'user',text:'TEC üzvlüyünü izah et'}],
+      {id:'membership',question:'TEC üzvlüyü'},
+      {apiKey:'test-key',fetch:(async()=>Response.json({choices:[{message:{content:reply},finish_reason:'stop'}]})) as typeof fetch});
+    assert.equal(Boolean(result),accepted,reply);
+  }
+});
