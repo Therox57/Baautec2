@@ -27,3 +27,23 @@ npm run build
 
 ## Vacib təhlükəsizlik
 Frontend-də yalnız publishable Supabase açarı istifadə olunur. Heç vaxt service-role və ya `sb_secret_...` açarını frontend/repository-yə əlavə etməyin. Məlumatların qorunması Supabase RLS ilə davam edir.
+
+
+## TECGPT — lokal + Groq
+
+TECGPT sadə BAAU/TEC suallarını lokal bilik bazasından cavablandırır. Sərbəst və təbii BAAU/TEC sualları təhlükəsiz scope yoxlamasından sonra Groq-a göndərilə bilər.
+
+Server environment dəyişənləri:
+
+```text
+GROQ_API_KEY=...
+GROQ_MODEL=openai/gpt-oss-20b
+KV_REST_API_URL=...
+KV_REST_API_TOKEN=...
+```
+
+`GROQ_API_KEY` heç vaxt `VITE_` prefiksi ilə frontend-ə çıxarılmamalıdır. Açar yoxdursa TECGPT lokal fallback ilə işləməyə davam edir.
+
+Sadə suallar Groq istifadə etmir. Groq hazırda yalnız sərbəst BAAU/TEC cavabları üçün istifadə olunur və provider limit/xəta zamanı lokal cavaba geri dönür.
+
+Ətraflı təhlükəsizlik qaydaları üçün `TECGPT-GUARDRAILS.md` faylına baxın.
