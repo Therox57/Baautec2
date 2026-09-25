@@ -21,6 +21,8 @@ const BLOCKED_PATTERNS = [
 ];
 
 const CONTINUATION_PATTERNS = [
+  /^(sence\s+)?(girim|qosulum|uzv olum)(\s+yoxsa\s+yox)?$/i,
+  /^(bes\s+)?(nece\s+)?(qosulum|uzv olum|qeydiyyatdan kecim)$/i,
   /^(bes\s+)?(qisa|qisaca)\s+(de|yaz|izah et)$/i,
   /^(bes\s+)?daha\s+(sade|sadə|etrafl[iı]|ətraflı)\s+(de|izah et|danis|danış)$/i,
   /^(bes\s+)?niye\??$/i,
@@ -242,19 +244,16 @@ export function resolveGroqTopic(
     return null;
   }
 
-  const previousUser = messages
-    .slice(0, -1)
-    .reverse()
-    .find(message => message.role === 'user');
-
-  if (!previousUser) {
-    return null;
+  // Only recognized follow-ups may bridge turns. Unrelated/unsafe user text
+  // breaks the chain, and assistant messages never authorize a topic.
+  for (const previous of messages.slice(0, -1).reverse()) {
+    if (previous.role !== 'user') continue;
+    if (isUnsafeFreeform(previous.text)) return null;
+    const topic = classifyTopic([previous]) || resolveAnchoredText(previous.text);
+    if (topic) return topic;
+    if (!isContinuation(previous.text)) return null;
   }
-
-  return (
-    classifyTopic([previousUser]) ||
-    resolveAnchoredText(previousUser.text)
-  );
+  return null;
 }
 
 export function isGroqConfigured(
@@ -311,6 +310,7 @@ export async function answerWithGroq(
     'Cari tarix, qiymət, boş yer, tədbir və dəyişə bilən məlumat VERIFIED_CONTEXT-də təsdiqlənməyibsə bunu açıq de.',
     'Azərbaycan dilində, təbii və səmimi danış. İstifadəçi qısa, sadə və ya rəsmi olmayan üslub istəyirsə üslubu uyğunlaşdır.',
     'Yeni URL uydurma.',
+    'Cavabı 2–4 qısa cümlə ilə tamamla. Lazımsız giriş və təkrar yazma.',
     '',
     'VERIFIED_CONTEXT:',
     verifiedContext,
@@ -341,7 +341,11 @@ export async function answerWithGroq(
             },
           ],
           temperature: 0.35,
-          max_completion_tokens: 280,
+          // GPT-OSS counts reasoning and final output in this same budget.
+          max_completion_tokens: 1200,
+          ...(model.startsWith('openai/gpt-oss-')
+            ? { reasoning_effort: 'low', include_reasoning: false }
+            : {}),
           stream: false,
         }),
       }
@@ -363,15 +367,19 @@ export async function answerWithGroq(
     if (
       typeof reply !== 'string' ||
       !reply ||
+      data?.choices?.[0]?.finish_reason === 'length' ||
       reply.length > 2200 ||
       containsUnknownUrl(reply, verifiedContext)
     ) {
       console.warn('[TECGPT] Invalid Groq response', {
         model,
+        reason: !reply ? 'empty' : data?.choices?.[0]?.finish_reason === 'length'
+          ? 'truncated' : reply.length > 2200 ? 'too_long' : 'unknown_url',
       });
       return null;
     }
 
+    console.info('[TECGPT] Groq response accepted', { model });
     return {
       reply,
       model,

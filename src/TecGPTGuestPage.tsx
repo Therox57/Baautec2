@@ -9,7 +9,7 @@ import {
 } from './tecgptGuestStorage'
 
 const welcome =
-  'Salam! Mən TECGPT-yəm 👋 Hazırda hesabsız beta test rejimi hazırlanır.'
+  'Salam! Mən TECGPT-yəm 👋 BAAU və TEC haqqında suallarını verə bilərsən.'
 
 function makeTitle(text: string) {
   const clean = text.replace(/\s+/g, ' ').trim()
@@ -316,7 +316,7 @@ export function TecGPTGuestPage() {
 
             <p>
               TECGPT beta • Tarixçə bu brauzerdə saxlanılır
-              • AI bağlantısı hazırlanır
+              • BAAU və TEC məlumat köməkçisi
             </p>
           </div>
         </div>
