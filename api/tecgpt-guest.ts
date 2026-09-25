@@ -14,12 +14,12 @@ import {
 } from "../server/topic.js";
 
 import {
-  getLocalAnswer,
   LOCAL_UNKNOWN_REPLY,
 } from "../server/localAnswers.js";
 
 import {
   answerWithGroq,
+  getVerifiedContextForConversation,
   isGroqConfigured,
   resolveGroqTopic,
 } from "../server/groq.js";
@@ -65,7 +65,10 @@ export default async function handler(req: any, res: any) {
     await enforceLimit("guest-hour", ip);
 
     const fallback =
-      getLocalAnswer(topic) ?? LOCAL_UNKNOWN_REPLY;
+      getVerifiedContextForConversation(
+        messages,
+        topic
+      ) ?? LOCAL_UNKNOWN_REPLY;
 
     // BAAU/TEC daxilində normal cavabı Groq qurur.
     // Salam/link kimi çox sadə lokal cavablar yuxarıda tutulur.
