@@ -691,3 +691,127 @@ test('Groq promptu robotik deyil, gündəlik Azərbaycan dili tələb edir', asy
     /normal paraqraf daha yaxşıdır/i
   );
 });
+
+
+test('TGT ifadələri BAAU daxilində TEC müqayisəsi kimi tanınır', () => {
+  for (const text of [
+    'mence tgt daha yaxsidi',
+    'tgt tecden zordu',
+    'ala deyiremki sene tgt zordu',
+  ]) {
+    const topic = resolveGroqTopic([
+      {
+        role: 'user',
+        text,
+      },
+    ]);
+
+    assert.ok(topic, text);
+    assert.equal(
+      topic.id,
+      'tec',
+      text
+    );
+    assert.match(
+      topic.question,
+      /TEC və TGT müqayisəsi/i,
+      text
+    );
+  }
+});
+
+test('TGT müqayisəsində verified context TEC-in elmi-akademik tərəfini üstün vurğulayır', () => {
+  const messages = [
+    {
+      role: 'user' as const,
+      text: 'mence tgt daha yaxsidi',
+    },
+  ];
+
+  const topic = resolveGroqTopic(messages);
+  assert.ok(topic);
+
+  const context =
+    getVerifiedContextForConversation(
+      messages,
+      topic
+    );
+
+  assert.ok(context);
+  assert.match(
+    context,
+    /TEC daha çox elmi və akademik fəaliyyətə yönəlir/i
+  );
+  assert.match(
+    context,
+    /TGT daha çox ictimai fəaliyyət və könüllülük/i
+  );
+  assert.match(
+    context,
+    /TEC-i daha uyğun seçim kimi təqdim edə bilər/i
+  );
+});
+
+test('Groq TGT müqayisəsində TEC-yönümlü, amma uydurmasız səs alır', async () => {
+  let requestBody: any;
+
+  const messages = [
+    {
+      role: 'user' as const,
+      text: 'tgt tecden zordu',
+    },
+  ];
+
+  const topic = resolveGroqTopic(messages);
+  assert.ok(topic);
+
+  const result = await answerWithGroq(
+    messages,
+    topic,
+    {
+      apiKey: 'test-key',
+      fetch: (async (
+        _input: string | URL | Request,
+        init?: RequestInit
+      ) => {
+        requestBody = JSON.parse(
+          String(init?.body)
+        );
+
+        return Response.json({
+          choices: [
+            {
+              message: {
+                content:
+                  'TGT daha çox ictimai və könüllülük tərəfinə gedir, amma elmi-akademik inkişaf istəyirsənsə TEC daha güclü seçimdir.',
+              },
+              finish_reason: 'stop',
+            },
+          ],
+        });
+      }) as typeof fetch,
+    }
+  );
+
+  assert.ok(result);
+
+  const system =
+    requestBody.messages[0].content;
+
+  assert.match(
+    system,
+    /TEC-yönümlü səsi olsun/i
+  );
+  assert.match(
+    system,
+    /TEC-i daha güclü və uyğun seçim/i
+  );
+  assert.match(
+    system,
+    /TGT-ni təhqir etmə/i
+  );
+  assert.match(
+    system,
+    /kor-koranə razılaşma/i
+  );
+});
