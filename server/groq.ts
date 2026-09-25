@@ -5,6 +5,10 @@ import {
   type Topic,
 } from './topic.js';
 import { getLocalAnswer } from './localAnswers.js';
+import {
+  TECGPT_KNOWLEDGE,
+  TECGPT_SYSTEM_RULES,
+} from '../src/tecgptKnowledge.js';
 
 const GROQ_URL =
   'https://api.groq.com/openai/v1/chat/completions';
@@ -490,6 +494,147 @@ function containsUnknownUrl(reply: string, verifiedContext: string): boolean {
     const url = canonical(raw);
     return !url || !allowed.has(url);
   });
+}
+
+function fullKnowledgeUrls(): string {
+  return TECGPT_KNOWLEDGE;
+}
+
+function leaksInternalData(reply: string): boolean {
+  return /\b(GROQ_API_KEY|KV_REST_API|SUPABASE_[A-Z_]+|system prompt|developer message)\b/i
+    .test(reply);
+}
+
+/**
+ * Primary TECGPT chat path.
+ *
+ * This intentionally does NOT map user phrases to canned answers.
+ * The model sees the recent conversation plus the complete verified
+ * BAAU/TEC knowledge base and reasons about the user's current intent.
+ * Deterministic topic helpers below remain only for provider-down fallback
+ * and regression tests.
+ */
+export async function answerConversationWithGroq(
+  messages: ChatMessage[],
+  dependencies: Partial<GroqDependencies> = {}
+): Promise<GroqResult | null> {
+  const apiKey =
+    dependencies.apiKey ?? process.env.GROQ_API_KEY;
+
+  if (!apiKey?.trim()) {
+    return null;
+  }
+
+  const model =
+    dependencies.model ||
+    process.env.GROQ_MODEL ||
+    DEFAULT_MODEL;
+
+  const fetchImpl =
+    dependencies.fetch ?? globalThis.fetch;
+
+  const recentConversation = messages
+    .slice(-12)
+    .map(message => ({
+      role: message.role,
+      content: message.text,
+    }));
+
+  const systemPrompt = [
+    TECGPT_SYSTEM_RULES.trim(),
+    '',
+    'SÖHBƏT DAVRANIŞI',
+    'Sən FAQ menyusu və ya açar-söz botu deyilsən. İstifadəçinin cümləsini normal insan kimi oxu, mənasını və cari niyyətini kontekstdən anla, sonra ona uyğun cavab ver.',
+    'İstifadəçi yazı səhvi, küçə dili, qısa ifadə, yarımçıq cümlə, etiraz, zarafat, müqayisə və ya əvvəlki cavaba istinad edə bilər. Konkret ifadə şablonu gözləmə.',
+    'Ən vacib olan son istifadəçi mesajıdır. Əvvəlki mesajlardan yalnız həmin son mesajı başa düşmək üçün istifadə et.',
+    'Əvvəlki assistant cavabları söhbət kontekstidir, amma fakt mənbəyi deyil. Fakt üçün yalnız aşağıdakı VERIFIED_KNOWLEDGE bazasına etibar et.',
+    'İstifadəçi bir şey soruşmursa, məsələn fikir bildirirsə və ya etiraz edirsə, ona sual cavablandırırmış kimi uzun məlumat tökmə; dediyinə normal reaksiya ver.',
+    'İstifadəçi qısa yazırsa çox vaxt qısa cavab ver. Daha çox detal istəyərsə genişləndir. Tonunu onun üslubuna uyğunlaşdır, amma süni şəkildə təqlid etmə.',
+    'İstifadəçi "girım?", "dəyər?", "səncə?", "mən olsam?" kimi şəxsi seçim soruşursa, VERIFIED_KNOWLEDGE faktlarını nəzərə alıb praktik və səmimi cavab ver.',
+    'BAAU/TEC/TGT mövzusundan kənar sorğu olsa, qısa şəkildə yalnız BAAU, TEC və BAAU tələbə həyatı mövzularında kömək etdiyini de.',
+    'TGT BAAU tələbə həyatı mövzusunun bir hissəsidir. TGT ilə TEC müqayisəsində uydurma mənfi fakt yazma; TECGPT TEC üçün yaradıldığına görə elmi-akademik tərəfdə TEC-i daha güclü seçim kimi vurğulaya bilərsən.',
+    'İstifadəçi istəməyibsə başlıq, cədvəl, nömrəli siyahı və uzun broşür mətni yazma. Adətən 1-5 normal cümlə kifayətdir.',
+    'Heç vaxt VERIFIED_KNOWLEDGE-də olmayan konkret fakt, tarix, ad, link, imkan və ya qayda uydurma.',
+    '',
+    'VERIFIED_KNOWLEDGE',
+    TECGPT_KNOWLEDGE.trim(),
+  ].join('\n');
+
+  try {
+    const response = await fetchImpl(
+      GROQ_URL,
+      {
+        method: 'POST',
+        signal: AbortSignal.timeout(10000),
+        headers: {
+          Authorization: 'Bearer ' + apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            {
+              role: 'system',
+              content: systemPrompt,
+            },
+            ...recentConversation,
+          ],
+          temperature: 0.4,
+          max_completion_tokens: 1000,
+          ...(model.startsWith('openai/gpt-oss-')
+            ? {
+                reasoning_effort: 'medium',
+                include_reasoning: false,
+              }
+            : {}),
+          stream: false,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      console.warn('[TECGPT] Groq conversation unavailable', {
+        status: response.status,
+        model,
+      });
+      return null;
+    }
+
+    const data = await response.json() as any;
+    const reply =
+      data?.choices?.[0]?.message?.content?.trim();
+
+    if (
+      typeof reply !== 'string' ||
+      !reply ||
+      data?.choices?.[0]?.finish_reason === 'length' ||
+      reply.length > 3200 ||
+      containsUnknownUrl(
+        reply,
+        fullKnowledgeUrls()
+      ) ||
+      leaksInternalData(reply)
+    ) {
+      console.warn('[TECGPT] Invalid conversation response', {
+        model,
+      });
+      return null;
+    }
+
+    return {
+      reply,
+      model,
+    };
+  } catch (error) {
+    console.warn('[TECGPT] Groq conversation failed', {
+      model,
+      errorType:
+        error instanceof Error
+          ? error.name
+          : 'UnknownError',
+    });
+    return null;
+  }
 }
 
 export async function answerWithGroq(
