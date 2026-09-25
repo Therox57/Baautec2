@@ -19,7 +19,7 @@ import {
 
 import {
   answerWithGroq,
-  getVerifiedContextForConversation,
+  getNaturalFallbackForConversation,
   isGroqConfigured,
   resolveGroqTopic,
 } from "../server/groq.js";
@@ -65,7 +65,7 @@ export default async function handler(req: any, res: any) {
     await enforceLimit("guest-hour", ip);
 
     const fallback =
-      getVerifiedContextForConversation(
+      getNaturalFallbackForConversation(
         messages,
         topic
       ) ?? LOCAL_UNKNOWN_REPLY;
