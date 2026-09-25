@@ -425,6 +425,47 @@ export function resolveGroqTopic(
   return null;
 }
 
+export function getNaturalFallbackForConversation(
+  messages: ChatMessage[],
+  topic: Topic
+): string {
+  const source = normalizedForRouting(
+    focusSourceText(messages, topic)
+  );
+
+  if (/\btgt\b/i.test(source)) {
+    return (
+      'TGT daha çox ictimai fəaliyyət və könüllülük tərəfinə gedir. ' +
+      'Elmi və akademik tərəf sənə daha maraqlıdırsa, TEC daha uyğun seçimdir.'
+    );
+  }
+
+  if (
+    /\b(tec|tecgpt)\b/i.test(source) &&
+    FOCUS_SIGNAL.membership.test(source)
+  ) {
+    return (
+      'TEC-ə qoşulmaq istəyirsənsə, üzvlük formasını buradan doldura bilərsən: ' +
+      'https://baautec.vercel.app 😊'
+    );
+  }
+
+  if (
+    /\b(tec|tecgpt)\b/i.test(source) &&
+    FOCUS_SIGNAL.benefit.test(source)
+  ) {
+    return (
+      'Qısası, elmi tərəfdə aktiv olmaq istəyirsənsə TEC bunun üçün yaxşı mühit yaradır. ' +
+      'Seminar, konfrans, tədqiqat və elmi layihələrə qoşulmaqla bu istiqamətdə inkişaf edə bilərsən.'
+    );
+  }
+
+  return (
+    getLocalAnswer(topic) ??
+    'Bu barədə məndə təsdiqlənmiş məlumat yoxdur.'
+  );
+}
+
 export function isGroqConfigured(
   apiKey = process.env.GROQ_API_KEY
 ): boolean {
