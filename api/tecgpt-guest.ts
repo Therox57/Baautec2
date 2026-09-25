@@ -18,7 +18,7 @@ import {
 } from "../server/localAnswers.js";
 
 import {
-  answerWithGroq,
+  answerConversationWithGroq,
   getNaturalFallbackForConversation,
   isGroqConfigured,
   resolveGroqTopic,
@@ -30,25 +30,6 @@ export default async function handler(req: any, res: any) {
 
   try {
     const messages = validateChatRequest(req);
-
-    const localReply = getLocalReply(messages);
-
-    if (localReply !== null) {
-      return res.status(200).json({
-        reply: localReply,
-        model: "local",
-      });
-    }
-
-    const topic = resolveGroqTopic(messages);
-
-    if (!topic) {
-      return res.status(200).json({
-        reply: TOPIC_MESSAGE,
-        model: "local",
-        rejected: true,
-      });
-    }
 
     if (
       !process.env.KV_REST_API_URL ||
@@ -64,23 +45,16 @@ export default async function handler(req: any, res: any) {
     await enforceLimit("guest-burst", ip);
     await enforceLimit("guest-hour", ip);
 
-    const fallback =
-      getNaturalFallbackForConversation(
-        messages,
-        topic
-      ) ?? LOCAL_UNKNOWN_REPLY;
-
-    // BAAU/TEC daxilində normal cavabı Groq qurur.
-    // Salam/link kimi çox sadə lokal cavablar yuxarıda tutulur.
-    // Groq unavailable/limit olduqda yerli cavab qalır.
+    // Normal söhbətdə ilk seçim Groq-dur. Model son mesajın
+    // mənasını söhbət kontekstindən özü anlayır; phrase -> answer
+    // cədvəli ilə idarə olunmur.
     if (isGroqConfigured()) {
       try {
         await enforceLimit("provider-minute", "groq");
         await enforceLimit("provider-day", "groq");
 
-        const groq = await answerWithGroq(
-          messages,
-          topic
+        const groq = await answerConversationWithGroq(
+          messages
         );
 
         if (groq) {
@@ -102,6 +76,35 @@ export default async function handler(req: any, res: any) {
         }
       }
     }
+
+    // Provider yoxdursa / limitə düşübsə lokal yol yalnız
+    // fallback kimi işləyir.
+    const localReply = getLocalReply(messages);
+
+    if (localReply !== null) {
+      return res.status(200).json({
+        reply: localReply,
+        model: "local",
+        degraded: true,
+      });
+    }
+
+    const topic = resolveGroqTopic(messages);
+
+    if (!topic) {
+      return res.status(200).json({
+        reply: TOPIC_MESSAGE,
+        model: "local",
+        rejected: true,
+        degraded: true,
+      });
+    }
+
+    const fallback =
+      getNaturalFallbackForConversation(
+        messages,
+        topic
+      ) ?? LOCAL_UNKNOWN_REPLY;
 
     return res.status(200).json({
       reply: fallback,
