@@ -151,9 +151,9 @@ test('Groq yalnız təsdiqlənmiş lokal kontekstlə çağırılır', async () =
   );
   assert.equal(
     body.max_completion_tokens,
-    550
+    650
   );
-  assert.equal(body.temperature, 0.25);
+  assert.equal(body.temperature, 0.35);
   assert.equal(body.reasoning_effort, 'low');
   assert.equal(body.include_reasoning, false);
   assert.equal(body.stream, false);
@@ -336,7 +336,7 @@ test('Groq follow-up zamanı yalnız uyğun istifadəçi kontekstini daşıyır'
 
   assert.match(
     userContent,
-    /RELEVANT_USER_CONTEXT/
+    /CONVERSATION/
   );
   assert.match(
     userContent,
@@ -346,13 +346,17 @@ test('Groq follow-up zamanı yalnız uyğun istifadəçi kontekstini daşıyır'
     userContent,
     /Bəs qısa de/
   );
-  assert.doesNotMatch(
+  assert.match(
+    userContent,
+    /ASSISTANT_CONTEXT_ONLY/
+  );
+  assert.match(
     userContent,
     /BU ASSISTANT MƏTNİ/
   );
   assert.match(
     requestBody.messages[0].content,
-    /fakt mənbəyi deyil/i
+    /oradakı faktlara etibar etmə/i
   );
 });
 
@@ -518,69 +522,74 @@ test('focused TEC context-də olmayan konkret imkan yazılsa Groq cavabı rədd 
 });
 
 
-test('Groq cavab rejimi qısa, ətraflı və mesaj follow-up-larında sərt qalır', async () => {
-  const base = [
+test('Groq phrase siyahısına bağlı olmadan cari niyyəti anlamaq üçün söhbəti görür', async () => {
+  let requestBody: any;
+
+  const messages = [
     {
       role: 'user' as const,
       text: 'TEC mənə nə qazandırar?',
     },
+    {
+      role: 'assistant' as const,
+      text: 'Əvvəlki cavab.',
+    },
+    {
+      role: 'user' as const,
+      text:
+        'hə onu elə demirəm e, adam kimi de görüm',
+    },
   ];
 
-  for (const [followUp, expected] of [
-    ['Bəs qısa de', /1-2 təbii, qısa cümlə/i],
-    ['Daha ətraflı izah et', /4-6 cümlə/i],
-    ['Dostuma göndərəcəyim formada yaz', /WhatsApp-da göndəriləcək kimi/i],
-    ['Başqa cür de', /daha təbii danışıq dilində 2-3 cümlə/i],
-  ] as const) {
-    let requestBody: any;
+  const topic = resolveGroqTopic(messages);
+  assert.ok(topic);
 
-    const messages = [
-      ...base,
-      {
-        role: 'user' as const,
-        text: followUp,
-      },
-    ];
+  const result = await answerWithGroq(
+    messages,
+    topic,
+    {
+      apiKey: 'test-key',
+      fetch: (async (
+        _input: string | URL | Request,
+        init?: RequestInit
+      ) => {
+        requestBody = JSON.parse(
+          String(init?.body)
+        );
 
-    const topic = resolveGroqTopic(messages);
-    assert.ok(topic, followUp);
-
-    const result = await answerWithGroq(
-      messages,
-      topic,
-      {
-        apiKey: 'test-key',
-        fetch: (async (
-          _input: string | URL | Request,
-          init?: RequestInit
-        ) => {
-          requestBody = JSON.parse(
-            String(init?.body)
-          );
-
-          return Response.json({
-            choices: [
-              {
-                message: {
-                  content:
-                    'TEC elmi-tədqiqat fəaliyyətinə və akademik inkişafa dəstək verir.',
-                },
-                finish_reason: 'stop',
+        return Response.json({
+          choices: [
+            {
+              message: {
+                content:
+                  'Qısası, elmi tərəfdə aktiv olmaq istəyirsənsə TEC bunun üçün yaxşı mühit yaradır.',
               },
-            ],
-          });
-        }) as typeof fetch,
-      }
-    );
+              finish_reason: 'stop',
+            },
+          ],
+        });
+      }) as typeof fetch,
+    }
+  );
 
-    assert.ok(result, followUp);
+  assert.ok(result);
 
-    assert.match(
-      requestBody.messages[1].content,
-      expected,
-      followUp
-    );
-  }
+  assert.match(
+    requestBody.messages[1].content,
+    /adam kimi de görüm/i
+  );
+  assert.match(
+    requestBody.messages[1].content,
+    /ASSISTANT_CONTEXT_ONLY/
+  );
+  assert.match(
+    requestBody.messages[0].content,
+    /CURRENT_MESSAGE-in niyyətini müəyyən et/i
+  );
+  assert.match(
+    requestBody.messages[0].content,
+    /xüsusi açar söz gözləmə/i
+  );
 });
 
 test('focused TEC fayda kontekstindən genişləndirilmiş live-preview iddiaları rədd edilir', async () => {
@@ -814,4 +823,50 @@ test('Groq TGT müqayisəsində TEC-yönümlü, amma uydurmasız səs alır', as
     system,
     /kor-koranə razılaşma/i
   );
+});
+
+
+test('yeni TGT fikri köhnə üzvlük sualını əvəz edir', () => {
+  const topic = resolveGroqTopic([
+    {
+      role: 'user',
+      text: 'TEC-ə necə üzv olum?',
+    },
+    {
+      role: 'assistant',
+      text: 'Üzvlük linki budur.',
+    },
+    {
+      role: 'user',
+      text: 'mence tgt daha yaxsidi',
+    },
+  ]);
+
+  assert.ok(topic);
+  assert.equal(topic.id, 'tec');
+  assert.match(
+    topic.question,
+    /TEC və TGT müqayisəsi/i
+  );
+});
+
+test('təbii follow-up xüsusi regex olmadan əvvəlki TEC mövzusunu daşıyır', () => {
+  const topic = resolveGroqTopic([
+    {
+      role: 'user',
+      text: 'TEC mənə nə qazandırar?',
+    },
+    {
+      role: 'assistant',
+      text: 'Əvvəlki cavab.',
+    },
+    {
+      role: 'user',
+      text:
+        'hə başa düşdüm də, indi bunu mənə normal adam kimi anlat',
+    },
+  ]);
+
+  assert.ok(topic);
+  assert.match(topic.id, /student-life/);
 });
