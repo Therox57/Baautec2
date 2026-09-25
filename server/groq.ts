@@ -17,7 +17,7 @@ const BLOCKED_PATTERNS = [
   /\b(telefon|phone|e-?mail|email)\b/i,
   /\b(malware|virus|phishing|hack|exploit)\b/i,
   /\b(bitcoin|crypto|kriptovalyuta|hava|weather|resept|recipe|gta|film|movie|mahn[iı]|song)\b/i,
-  /\b(kod|code)\s+(yaz|write)\b/i,
+  /\b(kod\w*|code)\s+(yaz|write)\b/i,
 ];
 
 const CONTINUATION_PATTERNS = [
@@ -149,7 +149,7 @@ function isUnsafeFreeform(raw: string): boolean {
     return true;
   }
 
-  if (/[<>{}\x60]|&#|=[A-Za-z0-9+/]{4,}/u.test(raw)) {
+  if (/[<>{}\x60=]|&#/u.test(raw)) {
     return true;
   }
 
@@ -158,7 +158,7 @@ function isUnsafeFreeform(raw: string): boolean {
 
 function hasInstitutionAnchor(text: string): boolean {
   return (
-    /\b(baau|tecgpt)\b/i.test(text) ||
+    /\b(baau|tec|tecgpt)\b/i.test(text) ||
     /\btec(?:e|de|den|in|nin)?\b/i.test(text) ||
     text.includes('baki avrasiya universitet') ||
     text.includes('baku eurasian university') ||
