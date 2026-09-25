@@ -4,8 +4,8 @@
 
 TECGPT hazırda hibrid arxitekturaya keçir:
 
-- dəqiq və sadə BAAU/TEC sualları yerli cavab bazasından cavablanır;
-- sərbəst və təbii BAAU/TEC sualları təhlükəsiz scope yoxlamasından sonra Groq-a göndərilə bilər;
+- salam və bəzi təhlükəsiz keçid cavabları lokal qaytarılır;
+- digər BAAU/TEC sualları təhlükəsiz scope yoxlamasından sonra Groq-a göndərilir;
 - Groq işləməsə, limitə düşsə və ya cavab etibarsız sayılsa yerli fallback cavabı istifadə olunur.
 
 ## Mövzu sərhədi
@@ -14,7 +14,7 @@ TECGPT yalnız Bakı Avrasiya Universiteti (BAAU) və BAAU Tələbə Elmi Cəmiy
 
 Sadə suallar üçün `classifyTopic()` sərt lokal filtr kimi qalır. Bu filtr tanınmış BAAU/TEC mövzularını qəbul edir və əlaqəsiz, qarışıq, injection, gizli Unicode və şəxsi məlumat sorğularını yerli şəkildə rədd edir.
 
-Sərbəst danışıq üçün `resolveGroqTopic()` ayrıca məhdudlaşdırılmış yol açır:
+Söhbət üçün `resolveGroqTopic()` məhdudlaşdırılmış yol açır:
 
 - son mesajda açıq BAAU/TEC anchor-u olmalıdır; və ya
 - yalnız qısa, əvvəlki tanınmış BAAU/TEC mövzusuna aid davam ifadələri qəbul edilir;
@@ -102,3 +102,8 @@ Testlər aşağıdakıları əhatə edir:
 - 429 və etibarsız URL zamanı lokal fallback.
 
 Production deploy-dan əvvəl canlı Supabase, Redis və Groq inteqrasiyası preview/staging mühitində ayrıca yoxlanmalıdır.
+
+
+## Söhbət konteksti
+
+Assistant tarixçəsi provider-ə söhbət konteksti kimi daşınmır. Qısa davam mesajlarında əvvəlki uyğun istifadəçi mesajları `RELEVANT_USER_CONTEXT` kimi əlavə olunur. Bu kontekst yalnız niyyət və üslubu anlamaq üçündür; fakt mənbəyi yenə yalnız `VERIFIED_CONTEXT`-dir. Beləliklə `Bəs qısa de`, `Daha ətraflı izah et`, `Başqa cür de`, `Dostuma göndərəcəyim formada yaz` kimi təbii davamlar əvvəlki BAAU/TEC sualını saxlayır, amma saxta assistant tarixçəsi faktları dəyişə bilmir.
