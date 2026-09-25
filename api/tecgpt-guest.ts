@@ -5,6 +5,7 @@ import {
   enforceLimit,
   validateChatRequest,
   sendSecurityError,
+  HttpError,
 } from "../server/security.js";
 
 import {
@@ -17,6 +18,12 @@ import {
   getLocalAnswer,
   LOCAL_UNKNOWN_REPLY,
 } from "../server/localAnswers.js";
+
+import {
+  answerWithGroq,
+  isGroqConfigured,
+  resolveGroqTopic,
+} from "../server/groq.js";
 
 export default async function handler(req: any, res: any) {
   res.setHeader("Cache-Control", "no-store");
@@ -34,7 +41,12 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    const topic = classifyTopic(messages);
+    const strictTopic = classifyTopic(messages);
+    const freeformTopic = strictTopic
+      ? null
+      : resolveGroqTopic(messages);
+
+    const topic = strictTopic ?? freeformTopic;
 
     if (!topic) {
       return res.status(200).json({
@@ -58,11 +70,53 @@ export default async function handler(req: any, res: any) {
     await enforceLimit("guest-burst", ip);
     await enforceLimit("guest-hour", ip);
 
-    const answer = getLocalAnswer(topic);
+    const fallback =
+      getLocalAnswer(topic) ?? LOCAL_UNKNOWN_REPLY;
+
+    // Dəqiq və sadə BAAU/TEC sualları Groq xərcləmir.
+    if (strictTopic) {
+      return res.status(200).json({
+        reply: fallback,
+        model: "local",
+      });
+    }
+
+    // Sərbəst BAAU/TEC sualları üçün Groq istifadə olunur.
+    // Groq unavailable/limit olduqda yerli cavab qalır.
+    if (isGroqConfigured()) {
+      try {
+        await enforceLimit("provider-minute", "groq");
+        await enforceLimit("provider-day", "groq");
+
+        const groq = await answerWithGroq(
+          messages,
+          topic
+        );
+
+        if (groq) {
+          return res.status(200).json({
+            reply: groq.reply,
+            model: groq.model,
+            provider: "groq",
+          });
+        }
+      } catch (error) {
+        if (
+          !(
+            error instanceof HttpError &&
+            (error.status === 429 ||
+              error.status === 503)
+          )
+        ) {
+          throw error;
+        }
+      }
+    }
 
     return res.status(200).json({
-      reply: answer ?? LOCAL_UNKNOWN_REPLY,
+      reply: fallback,
       model: "local",
+      degraded: true,
     });
   } catch (error) {
     if (sendSecurityError(error, res)) {
@@ -70,8 +124,10 @@ export default async function handler(req: any, res: any) {
     }
 
     console.error(
-      "TECGPT local guest error:",
-      error instanceof Error ? error.name : "UnknownError"
+      "TECGPT guest error:",
+      error instanceof Error
+        ? error.name
+        : "UnknownError"
     );
 
     return res.status(500).json({
