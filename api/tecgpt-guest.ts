@@ -1,4 +1,3 @@
-
 /// <reference types="node" />
 
 import {
@@ -14,29 +13,17 @@ import {
   TOPIC_MESSAGE,
 } from "../server/topic.js";
 
-import { answerTopic } from "../server/tecgpt.js";
+import {
+  getLocalAnswer,
+  LOCAL_UNKNOWN_REPLY,
+} from "../server/localAnswers.js";
 
 export default async function handler(req: any, res: any) {
-
   res.setHeader("Cache-Control", "no-store");
-
-  res.setHeader(
-    "X-Content-Type-Options",
-    "nosniff"
-  );
+  res.setHeader("X-Content-Type-Options", "nosniff");
 
   try {
-
-    // ==========================================
-    // MESAJLARIN YOXLANMASI
-    // ==========================================
-
     const messages = validateChatRequest(req);
-
-    // ==========================================
-    // YERLİ CAVABLAR
-    // GEMINI API İSTİFADƏ OLUNMUR
-    // ==========================================
 
     const localReply = getLocalReply(messages);
 
@@ -46,10 +33,6 @@ export default async function handler(req: any, res: any) {
         model: "local",
       });
     }
-
-    // ==========================================
-    // BAAU / TEC MÖVZU FİLTRİ
-    // ==========================================
 
     const topic = classifyTopic(messages);
 
@@ -61,70 +44,38 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    // ==========================================
-    // SERVER KONFİQURASİYASI
-    // ==========================================
-
-    const geminiKey =
-      process.env.GEMINI_API_KEY;
-
     if (
-      !geminiKey ||
       !process.env.KV_REST_API_URL ||
       !process.env.KV_REST_API_TOKEN
     ) {
       return res.status(503).json({
-        error:
-          "Qonaq TECGPT konfiqurasiyası hazır deyil.",
+        error: "TECGPT təhlükəsizlik xidməti hazır deyil.",
       });
     }
 
-    // ==========================================
-    // İSTİFADƏÇİNİN IP ÜNVANI
-    // ==========================================
-
     const ip = clientIp(req);
 
-    // ==========================================
-    // REDIS SORĞU LİMİTLƏRİ
-    // ==========================================
+    await enforceLimit("guest-burst", ip);
+    await enforceLimit("guest-hour", ip);
 
-    await enforceLimit(
-      "guest-burst",
-      ip
-    );
+    const answer = getLocalAnswer(topic);
 
-    await enforceLimit(
-      "guest-hour",
-      ip
-    );
-
-    // ==========================================
-    // REDIS CACHE + GEMINI
-    // ==========================================
-
-    return res.status(200).json(
-      await answerTopic(topic)
-    );
-
+    return res.status(200).json({
+      reply: answer ?? LOCAL_UNKNOWN_REPLY,
+      model: "local",
+    });
   } catch (error) {
-
-    // ==========================================
-    // TƏHLÜKƏSİZLİK XƏTALARI
-    // ==========================================
-
     if (sendSecurityError(error, res)) {
       return;
     }
 
-    // ==========================================
-    // ÜMUMİ SERVER XƏTASI
-    // ==========================================
+    console.error(
+      "TECGPT local guest error:",
+      error instanceof Error ? error.name : "UnknownError"
+    );
 
     return res.status(500).json({
-      error:
-        "TECGPT serverində xəta baş verdi.",
+      error: "TECGPT serverində xəta baş verdi.",
     });
-
   }
 }
