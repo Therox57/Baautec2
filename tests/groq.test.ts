@@ -272,3 +272,101 @@ test('verified URLs tolerate punctuation and a root slash but not new destinatio
     assert.equal(Boolean(result),accepted,reply);
   }
 });
+
+
+test('follow-up üslub təlimatları eyni mövzunu saxlayır və Groq-a açıq ötürülür', async () => {
+  const messages = [
+    {
+      role: 'user' as const,
+      text:
+        'Mən birinci kursam, TEC-ə qoşulsam mənə nə xeyri olacaq? Rəsmi danışma.',
+    },
+    {
+      role: 'assistant' as const,
+      text: 'Əvvəlki cavab.',
+    },
+    {
+      role: 'user' as const,
+      text: 'Bəs qısa de',
+    },
+  ];
+
+  const topic = resolveGroqTopic(messages);
+
+  assert.ok(topic);
+  assert.match(topic.id, /membership/);
+
+  let requestBody: any;
+
+  const mockFetch = (async (
+    _input: string | URL | Request,
+    init?: RequestInit
+  ) => {
+    requestBody = JSON.parse(String(init?.body));
+
+    return Response.json({
+      choices: [
+        {
+          message: {
+            content:
+              'TEC sənə elmi fəaliyyət və layihələrdə iştirak imkanı verir. Üzvlük üçün təsdiqlənmiş qeydiyyat linkindən istifadə edə bilərsən.',
+          },
+          finish_reason: 'stop',
+        },
+      ],
+    });
+  }) as typeof globalThis.fetch;
+
+  const result = await answerWithGroq(
+    messages,
+    topic,
+    {
+      apiKey: 'test-key',
+      fetch: mockFetch,
+    }
+  );
+
+  assert.ok(result);
+
+  const userContent =
+    requestBody.messages[1].content;
+
+  assert.match(
+    userContent,
+    /FOLLOW_UP_INSTRUCTION/
+  );
+  assert.match(
+    userContent,
+    /maksimum 2 qısa cümlə/i
+  );
+  assert.match(
+    requestBody.messages[0].content,
+    /mövzunu BAAU\/TEC daxilində belə özbaşına genişləndirmə/i
+  );
+});
+
+test('sadə və ətraflı davam ifadələri tanınır', () => {
+  for (const followUp of [
+    'Sadə de',
+    'Bir az ətraflı de',
+    'Daha ətraflı izah et',
+    'Başqa cür izah et',
+  ]) {
+    const topic = resolveGroqTopic([
+      {
+        role: 'user',
+        text: 'TEC-ə necə üzv olum?',
+      },
+      {
+        role: 'user',
+        text: followUp,
+      },
+    ]);
+
+    assert.equal(
+      topic?.id,
+      'membership',
+      followUp
+    );
+  }
+});
