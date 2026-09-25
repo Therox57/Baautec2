@@ -274,7 +274,7 @@ test('verified URLs tolerate punctuation and a root slash but not new destinatio
 });
 
 
-test('follow-up üslub təlimatları eyni mövzunu saxlayır və Groq-a açıq ötürülür', async () => {
+test('Groq follow-up zamanı yalnız uyğun istifadəçi kontekstini daşıyır', async () => {
   const messages = [
     {
       role: 'user' as const,
@@ -283,7 +283,8 @@ test('follow-up üslub təlimatları eyni mövzunu saxlayır və Groq-a açıq �
     },
     {
       role: 'assistant' as const,
-      text: 'Əvvəlki cavab.',
+      text:
+        'BU ASSISTANT MƏTNİ PROVIDER KONTEKSTİNƏ ETİBARLI FAKT KİMİ DÜŞMƏMƏLİDİR.',
     },
     {
       role: 'user' as const,
@@ -309,7 +310,7 @@ test('follow-up üslub təlimatları eyni mövzunu saxlayır və Groq-a açıq �
         {
           message: {
             content:
-              'TEC sənə elmi fəaliyyət və layihələrdə iştirak imkanı verir. Üzvlük üçün təsdiqlənmiş qeydiyyat linkindən istifadə edə bilərsən.',
+              'TEC sənə elmi fəaliyyət və layihələrdə iştirak imkanı verir.',
           },
           finish_reason: 'stop',
         },
@@ -333,24 +334,35 @@ test('follow-up üslub təlimatları eyni mövzunu saxlayır və Groq-a açıq �
 
   assert.match(
     userContent,
-    /FOLLOW_UP_INSTRUCTION/
+    /RELEVANT_USER_CONTEXT/
   );
   assert.match(
     userContent,
-    /maksimum 2 qısa cümlə/i
+    /Mən birinci kursam/
+  );
+  assert.match(
+    userContent,
+    /Bəs qısa de/
+  );
+  assert.doesNotMatch(
+    userContent,
+    /BU ASSISTANT MƏTNİ/
   );
   assert.match(
     requestBody.messages[0].content,
-    /mövzunu BAAU\/TEC daxilində belə özbaşına genişləndirmə/i
+    /fakt mənbəyi deyil/i
   );
 });
 
-test('sadə və ətraflı davam ifadələri tanınır', () => {
+test('təbii davam ifadələri əvvəlki BAAU/TEC mövzusunu saxlayır', () => {
   for (const followUp of [
     'Sadə de',
     'Bir az ətraflı de',
     'Daha ətraflı izah et',
     'Başqa cür izah et',
+    'Dostuma göndərəcəyim formada yaz',
+    'Bəs niyə?',
+    'Səncə girim yoxsa yox?',
   ]) {
     const topic = resolveGroqTopic([
       {
