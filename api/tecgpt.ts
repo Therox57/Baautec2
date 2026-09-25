@@ -14,12 +14,12 @@ import {
 } from "../server/topic.js";
 
 import {
-  getLocalAnswer,
   LOCAL_UNKNOWN_REPLY,
 } from "../server/localAnswers.js";
 
 import {
   answerWithGroq,
+  getVerifiedContextForConversation,
   isGroqConfigured,
   resolveGroqTopic,
 } from "../server/groq.js";
@@ -162,7 +162,10 @@ export default async function handler(req: any, res: any) {
     }
 
     const fallback =
-      getLocalAnswer(topic) ?? LOCAL_UNKNOWN_REPLY;
+      getVerifiedContextForConversation(
+        messages,
+        topic
+      ) ?? LOCAL_UNKNOWN_REPLY;
 
     if (isGroqConfigured()) {
       try {
