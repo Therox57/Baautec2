@@ -1,4 +1,3 @@
-
 /// <reference types="node" />
 
 import {
@@ -6,79 +5,31 @@ import {
   enforceLimit,
   validateChatRequest,
   sendSecurityError,
+  HttpError,
 } from "../server/security.js";
 
 import {
-  classifyTopic,
   getLocalReply,
   TOPIC_MESSAGE,
 } from "../server/topic.js";
 
-import { answerTopic } from "../server/tecgpt.js";
+import {
+  LOCAL_UNKNOWN_REPLY,
+} from "../server/localAnswers.js";
+
+import {
+  answerConversationWithGroq,
+  getNaturalFallbackForConversation,
+  isGroqConfigured,
+  resolveGroqTopic,
+} from "../server/groq.js";
 
 export default async function handler(req: any, res: any) {
   res.setHeader("Cache-Control", "no-store");
-
   res.setHeader("X-Content-Type-Options", "nosniff");
 
   try {
-    // ==========================================
-    // MESAJLARIN YOXLANMASI
-    // ==========================================
-
     const messages = validateChatRequest(req);
-
-    // ==========================================
-    // YERLİ CAVABLAR
-    // GEMINI API İSTİFADƏ OLUNMUR
-    // ==========================================
-
-    const localReply = getLocalReply(messages);
-
-    if (localReply !== null) {
-      return res.status(200).json({
-        reply: localReply,
-        model: "local",
-      });
-    }
-
-    // ==========================================
-    // BAAU / TEC MÖVZU FİLTRİ
-    // ==========================================
-
-    const topic = classifyTopic(messages);
-
-    if (!topic) {
-      return res.status(200).json({
-        reply: TOPIC_MESSAGE,
-        model: "local",
-        rejected: true,
-      });
-    }
-
-    // ==========================================
-    // SERVER KONFİQURASİYASI
-    // ==========================================
-
-    const geminiKey = process.env.GEMINI_API_KEY;
-
-    const supabaseUrl =
-      process.env.SUPABASE_URL ||
-      process.env.VITE_SUPABASE_URL;
-
-    const supabaseKey =
-      process.env.SUPABASE_PUBLISHABLE_KEY ||
-      process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
-    if (!geminiKey || !supabaseUrl || !supabaseKey) {
-      return res.status(500).json({
-        error: "Server konfiqurasiyası tamamlanmayıb.",
-      });
-    }
-
-    // ==========================================
-    // İSTİFADƏÇİ GİRİŞİ
-    // ==========================================
 
     const authHeader = String(
       req.headers.authorization || ""
@@ -99,9 +50,19 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    // ==========================================
-    // IP SORĞU LİMİTİ
-    // ==========================================
+    const supabaseUrl =
+      process.env.SUPABASE_URL ||
+      process.env.VITE_SUPABASE_URL;
+
+    const supabaseKey =
+      process.env.SUPABASE_PUBLISHABLE_KEY ||
+      process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      return res.status(500).json({
+        error: "Server konfiqurasiyası tamamlanmayıb.",
+      });
+    }
 
     await enforceLimit(
       "auth-ip",
@@ -110,18 +71,13 @@ export default async function handler(req: any, res: any) {
 
     const accessToken = authHeader.slice(7);
 
-    // ==========================================
-    // SUPABASE İSTİFADƏÇİ YOXLAMASI
-    // ==========================================
-
     const userResponse = await fetch(
-      `${supabaseUrl}/auth/v1/user`,
+      supabaseUrl + "/auth/v1/user",
       {
         signal: AbortSignal.timeout(8000),
-
         headers: {
           apikey: supabaseKey,
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: "Bearer " + accessToken,
         },
       }
     );
@@ -143,20 +99,16 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    // ==========================================
-    // ADMIN / TESTER ROL YOXLAMASI
-    // ==========================================
-
     const roleResponse = await fetch(
-      `${supabaseUrl}/rest/v1/user_roles?user_id=eq.${encodeURIComponent(
-        user.id
-      )}&role=in.(admin,tester)&select=role&limit=1`,
+      supabaseUrl +
+        "/rest/v1/user_roles?user_id=eq." +
+        encodeURIComponent(user.id) +
+        "&role=in.(admin,tester)&select=role&limit=1",
       {
         signal: AbortSignal.timeout(8000),
-
         headers: {
           apikey: supabaseKey,
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: "Bearer " + accessToken,
         },
       }
     );
@@ -180,10 +132,6 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    // ==========================================
-    // İSTİFADƏÇİ SORĞU LİMİTLƏRİ
-    // ==========================================
-
     await enforceLimit(
       "user-minute",
       user.id
@@ -194,23 +142,81 @@ export default async function handler(req: any, res: any) {
       user.id
     );
 
-    // ==========================================
-    // REDIS CACHE + GEMINI
-    // ==========================================
+    if (isGroqConfigured()) {
+      try {
+        await enforceLimit("provider-minute", "groq");
+        await enforceLimit("provider-day", "groq");
 
-    return res.status(200).json(
-      await answerTopic(topic)
-    );
+        const groq = await answerConversationWithGroq(
+          messages
+        );
 
+        if (groq) {
+          return res.status(200).json({
+            reply: groq.reply,
+            model: groq.model,
+            provider: "groq",
+          });
+        }
+      } catch (error) {
+        if (
+          !(
+            error instanceof HttpError &&
+            (error.status === 429 ||
+              error.status === 503)
+          )
+        ) {
+          throw error;
+        }
+      }
+    }
+
+    const localReply = getLocalReply(messages);
+
+    if (localReply !== null) {
+      return res.status(200).json({
+        reply: localReply,
+        model: "local",
+        degraded: true,
+      });
+    }
+
+    const topic = resolveGroqTopic(messages);
+
+    if (!topic) {
+      return res.status(200).json({
+        reply: TOPIC_MESSAGE,
+        model: "local",
+        rejected: true,
+        degraded: true,
+      });
+    }
+
+    const fallback =
+      getNaturalFallbackForConversation(
+        messages,
+        topic
+      ) ?? LOCAL_UNKNOWN_REPLY;
+
+    return res.status(200).json({
+      reply: fallback,
+      model: "local",
+      degraded: true,
+    });
   } catch (error) {
-
     if (sendSecurityError(error, res)) {
       return;
     }
 
+    console.error(
+      "TECGPT admin error:",
+      error instanceof Error
+        ? error.name
+        : "UnknownError"
+    );
+
     return res.status(500).json({
-      error:
-        "TECGPT serverində xəta baş verdi.",
+      error: "TECGPT serverində xəta baş verdi.",
     });
   }
 }

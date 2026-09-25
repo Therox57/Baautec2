@@ -43,6 +43,63 @@ export function getLocalReply(
     .trim()
     .replace(/\s+/g, ' ');
 
+  // ========================================
+  // DAVAM SUALI: KEÇİD İSTƏYİ
+  // ========================================
+
+  const asksForLink = [
+    'bes linkini at',
+    'bes linki at',
+    'linkini at',
+    'linki at',
+    'link ver',
+    'linkini ver',
+    'linkini goster',
+    'linki goster',
+  ].includes(text);
+
+  if (asksForLink) {
+    const previousUserMessage = messages
+      .slice(0, -1)
+      .reverse()
+      .find(message => message.role === 'user');
+
+    const previousTopic = previousUserMessage
+      ? classifyTopic([previousUserMessage])
+      : null;
+
+    const previousIds = previousTopic?.id.split('+') ?? [];
+
+    if (previousIds.includes('membership')) {
+      return (
+        'Buyur! 😊 TEC üzvlük qeydiyyatı:\n' +
+        'https://baautec.vercel.app'
+      );
+    }
+
+    if (
+      previousIds.includes('tec') ||
+      previousIds.includes('clubs') ||
+      previousIds.includes('events')
+    ) {
+      return (
+        'Buyur! 😊 BAAU TEC Instagram:\n' +
+        'https://www.instagram.com/baau__tec/'
+      );
+    }
+
+    if (previousTopic) {
+      return (
+        'Buyur! 😊 BAAU rəsmi saytı:\n' +
+        'https://baau.edu.az'
+      );
+    }
+
+    // Sərbəst əvvəlki sual strict classifier-ə düşməyə bilər.
+    // Belə halda cavabı Groq conversation context-ə burax.
+    return null;
+  }
+
   const greetings = [
     'salam',
     'salamlar',
@@ -73,8 +130,8 @@ export function getLocalReply(
     return (
       'Mən TECGPT, Bakı Avrasiya ' +
       'Universiteti Tələbə Elmi ' +
-      'Cəmiyyətinin süni intellekt ' +
-      'köməkçisiyəm. 😊 ' +
+      'Cəmiyyəti üçün hazırlanmış rəqəmsal ' +
+      'məlumat köməkçisiyəm. 😊 ' +
       'BAAU, TEC, tələbə həyatı, ' +
       'fakültələr və universitet ' +
       'haqqında məlumat verə bilərəm.'
@@ -173,7 +230,7 @@ const topics = [
 // ==========================================
 
 const filler =
-  /^(salam|salamlar|zehmet|olmasa|haqqinda|haqqindaki|barede|ile|ucun|ve|ne|nedir|nedi|nece|necedir|necedi|kim|kimdir|kimsen|hansi|var|varmi|olur|olar|ola|edir|edim|edek|olmaq|isteyirem|melumat|ver|vere|bilersen|bilersiniz|bilerem|men|mene|sen|biz|telebe(ler|leri|si)?|universitet(i|inde|inin)?|baki|avrasiya|cemiyyeti|bu|gun|indi|hazirda|son|is|bes|orada|oradaki|hemin|danis|please|tell|me|about|what|is|the|how|can|i|a|of|at|in|student|students|university|baku|eurasian|society)$/;
+  /^(salam|salamlar|zehmet|olmasa|haqqinda|haqqindaki|barede|ile|ucun|ve|ne|nedir|nedi|nece|necedir|necedi|kim|kimdir|kimsen|hansi|var|varmi|olur|olar|ola|edir|edim|edek|olmaq|olum|isteyirem|melumat|ver|vere|bilersen|bilersiniz|bilerem|men|mene|sen|biz|telebe(ler|leri|si)?|universitet(i|inde|inin)?|baki|avrasiya|cemiyyeti|bu|gun|indi|hazirda|son|is|bes|orada|oradaki|hemin|danis|please|tell|me|about|what|is|the|how|can|i|a|of|at|in|student|students|university|baku|eurasian|society)$/;
 
 // ==========================================
 // MÖVZU TƏSNİFATI

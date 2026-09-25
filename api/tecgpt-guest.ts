@@ -1,4 +1,3 @@
-
 /// <reference types="node" />
 
 import {
@@ -6,125 +5,153 @@ import {
   enforceLimit,
   validateChatRequest,
   sendSecurityError,
+  HttpError,
 } from "../server/security.js";
 
 import {
-  classifyTopic,
   getLocalReply,
   TOPIC_MESSAGE,
 } from "../server/topic.js";
 
-import { answerTopic } from "../server/tecgpt.js";
+import {
+  LOCAL_UNKNOWN_REPLY,
+} from "../server/localAnswers.js";
+
+import {
+  answerConversationWithGroq,
+  getNaturalFallbackForConversation,
+  isGroqConfigured,
+  resolveGroqTopic,
+} from "../server/groq.js";
 
 export default async function handler(req: any, res: any) {
-
   res.setHeader("Cache-Control", "no-store");
-
-  res.setHeader(
-    "X-Content-Type-Options",
-    "nosniff"
-  );
+  res.setHeader("X-Content-Type-Options", "nosniff");
 
   try {
-
-    // ==========================================
-    // MESAJLARIN YOXLANMASI
-    // ==========================================
-
     const messages = validateChatRequest(req);
 
-    // ==========================================
-    // YERLİ CAVABLAR
-    // GEMINI API İSTİFADƏ OLUNMUR
-    // ==========================================
+    // Groq konfiqurasiya olunmayıbsa köhnə təhlükəsiz lokal
+    // greeting/off-topic davranışını Redis olmadan da saxla.
+    // Production-da GROQ_API_KEY olduqda bu blok işləmir və normal
+    // söhbət aşağıda Groq-a gedir.
+    if (!isGroqConfigured()) {
+      const localReply = getLocalReply(messages);
 
+      if (localReply !== null) {
+        return res.status(200).json({
+          reply: localReply,
+          model: "local",
+          degraded: true,
+        });
+      }
+
+      const localTopic = resolveGroqTopic(messages);
+
+      if (!localTopic) {
+        return res.status(200).json({
+          reply: TOPIC_MESSAGE,
+          model: "local",
+          rejected: true,
+          degraded: true,
+        });
+      }
+    }
+
+    if (
+      !process.env.KV_REST_API_URL ||
+      !process.env.KV_REST_API_TOKEN
+    ) {
+      return res.status(503).json({
+        error: "TECGPT təhlükəsizlik xidməti hazır deyil.",
+      });
+    }
+
+    const ip = clientIp(req);
+
+    await enforceLimit("guest-burst", ip);
+    await enforceLimit("guest-hour", ip);
+
+    // Normal söhbətdə ilk seçim Groq-dur. Model son mesajın
+    // mənasını söhbət kontekstindən özü anlayır; phrase -> answer
+    // cədvəli ilə idarə olunmur.
+    if (isGroqConfigured()) {
+      try {
+        await enforceLimit("provider-minute", "groq");
+        await enforceLimit("provider-day", "groq");
+
+        const groq = await answerConversationWithGroq(
+          messages
+        );
+
+        if (groq) {
+          return res.status(200).json({
+            reply: groq.reply,
+            model: groq.model,
+            provider: "groq",
+          });
+        }
+      } catch (error) {
+        if (
+          !(
+            error instanceof HttpError &&
+            (error.status === 429 ||
+              error.status === 503)
+          )
+        ) {
+          throw error;
+        }
+      }
+    }
+
+    // Provider yoxdursa / limitə düşübsə lokal yol yalnız
+    // fallback kimi işləyir.
     const localReply = getLocalReply(messages);
 
     if (localReply !== null) {
       return res.status(200).json({
         reply: localReply,
         model: "local",
+        degraded: true,
       });
     }
 
-    // ==========================================
-    // BAAU / TEC MÖVZU FİLTRİ
-    // ==========================================
-
-    const topic = classifyTopic(messages);
+    const topic = resolveGroqTopic(messages);
 
     if (!topic) {
       return res.status(200).json({
         reply: TOPIC_MESSAGE,
         model: "local",
         rejected: true,
+        degraded: true,
       });
     }
 
-    // ==========================================
-    // SERVER KONFİQURASİYASI
-    // ==========================================
+    const fallback =
+      getNaturalFallbackForConversation(
+        messages,
+        topic
+      ) ?? LOCAL_UNKNOWN_REPLY;
 
-    const geminiKey =
-      process.env.GEMINI_API_KEY;
-
-    if (
-      !geminiKey ||
-      !process.env.KV_REST_API_URL ||
-      !process.env.KV_REST_API_TOKEN
-    ) {
-      return res.status(503).json({
-        error:
-          "Qonaq TECGPT konfiqurasiyası hazır deyil.",
-      });
-    }
-
-    // ==========================================
-    // İSTİFADƏÇİNİN IP ÜNVANI
-    // ==========================================
-
-    const ip = clientIp(req);
-
-    // ==========================================
-    // REDIS SORĞU LİMİTLƏRİ
-    // ==========================================
-
-    await enforceLimit(
-      "guest-burst",
-      ip
-    );
-
-    await enforceLimit(
-      "guest-hour",
-      ip
-    );
-
-    // ==========================================
-    // REDIS CACHE + GEMINI
-    // ==========================================
-
-    return res.status(200).json(
-      await answerTopic(topic)
-    );
-
+    return res.status(200).json({
+      reply: fallback,
+      model: "local",
+      degraded: true,
+    });
   } catch (error) {
-
-    // ==========================================
-    // TƏHLÜKƏSİZLİK XƏTALARI
-    // ==========================================
-
     if (sendSecurityError(error, res)) {
       return;
     }
 
-    // ==========================================
-    // ÜMUMİ SERVER XƏTASI
-    // ==========================================
+    console.error(
+      "TECGPT guest error:",
+      error instanceof Error
+        ? error.name
+        : "UnknownError"
+    );
 
     return res.status(500).json({
-      error:
-        "TECGPT serverində xəta baş verdi.",
+      error: "TECGPT serverində xəta baş verdi.",
     });
-
   }
 }
