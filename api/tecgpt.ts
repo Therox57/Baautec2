@@ -18,7 +18,7 @@ import {
 } from "../server/localAnswers.js";
 
 import {
-  answerWithGroq,
+  answerConversationWithGroq,
   getNaturalFallbackForConversation,
   isGroqConfigured,
   resolveGroqTopic,
@@ -142,39 +142,13 @@ export default async function handler(req: any, res: any) {
       user.id
     );
 
-    const localReply = getLocalReply(messages);
-
-    if (localReply !== null) {
-      return res.status(200).json({
-        reply: localReply,
-        model: "local",
-      });
-    }
-
-    const topic = resolveGroqTopic(messages);
-
-    if (!topic) {
-      return res.status(200).json({
-        reply: TOPIC_MESSAGE,
-        model: "local",
-        rejected: true,
-      });
-    }
-
-    const fallback =
-      getNaturalFallbackForConversation(
-        messages,
-        topic
-      ) ?? LOCAL_UNKNOWN_REPLY;
-
     if (isGroqConfigured()) {
       try {
         await enforceLimit("provider-minute", "groq");
         await enforceLimit("provider-day", "groq");
 
-        const groq = await answerWithGroq(
-          messages,
-          topic
+        const groq = await answerConversationWithGroq(
+          messages
         );
 
         if (groq) {
@@ -196,6 +170,33 @@ export default async function handler(req: any, res: any) {
         }
       }
     }
+
+    const localReply = getLocalReply(messages);
+
+    if (localReply !== null) {
+      return res.status(200).json({
+        reply: localReply,
+        model: "local",
+        degraded: true,
+      });
+    }
+
+    const topic = resolveGroqTopic(messages);
+
+    if (!topic) {
+      return res.status(200).json({
+        reply: TOPIC_MESSAGE,
+        model: "local",
+        rejected: true,
+        degraded: true,
+      });
+    }
+
+    const fallback =
+      getNaturalFallbackForConversation(
+        messages,
+        topic
+      ) ?? LOCAL_UNKNOWN_REPLY;
 
     return res.status(200).json({
       reply: fallback,
