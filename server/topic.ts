@@ -95,11 +95,9 @@ export function getLocalReply(
       );
     }
 
-    return (
-      'Hansı keçidi istəyirsən? 😊 ' +
-      'TEC üzvlük qeydiyyatı, TEC Instagram, ' +
-      'yoxsa BAAU rəsmi saytı?'
-    );
+    // Sərbəst əvvəlki sual strict classifier-ə düşməyə bilər.
+    // Belə halda cavabı Groq conversation context-ə burax.
+    return null;
   }
 
   const greetings = [
