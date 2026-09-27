@@ -924,7 +924,7 @@ test('əsas chat yolu uyğun verified knowledge və real söhbət konteksti ilə
   );
   assert.equal(
     body.reasoning_effort,
-    'low'
+    'medium'
   );
   assert.equal(
     body.include_reasoning,
@@ -1072,4 +1072,12 @@ test('conversation provider outage and quota exhaustion use fallback without ret
     assert.equal(result, null);
     assert.equal(calls, 1);
   }
+});
+
+
+test('conversation rejects the unverified mentorship claim seen in live preview', async () => {
+  const result = await answerConversationWithGroq([{role:'user', text:'TEC mənə nə xeyir verəcək?'}], {
+    apiKey:'test', fetch:(async () => Response.json({choices:[{finish_reason:'stop', message:{content:JSON.stringify({scope:'baau_tec',reply:'TEC-ə qoşulmaqla mentorluq imkanları əldə edirsən.'})}}]})) as typeof fetch,
+  });
+  assert.equal(result, null);
 });

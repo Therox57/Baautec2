@@ -10,7 +10,7 @@ Model universitetin ümumi imkanlarını TEC üzvlüyünün təminatı kimi təq
 
 ## Provider və ehtiyat rejimi
 
-Default openai/gpt-oss-120b; reasoning low, daxili reasoning göstərilmir, maksimum 1800 completion token, 10 saniyə timeout. Bir cəhd edilir. Model konfiqurasiyası GROQ_MODEL ilə dəyişə bilər; başqa model seçimi yenidən canlı yoxlanmalıdır.
+Default openai/gpt-oss-120b; reasoning medium, daxili reasoning göstərilmir, maksimum 1800 completion token, 10 saniyə timeout. Bir cəhd edilir. Model konfiqurasiyası GROQ_MODEL ilə dəyişə bilər; başqa model seçimi yenidən canlı yoxlanmalıdır.
 
 Cavabın JSON sxemi, tamamlanması, uzunluğu, gizli sistem adları və bütün HTTP(S) linklərin bilik bazasındakı URL-lərə dəqiq uyğunluğu yoxlanılır. Yalnız metadata loglanır, mesaj məzmunu və API açarı loglanmır.
 

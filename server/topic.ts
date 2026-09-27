@@ -2,7 +2,7 @@
 import type { ChatMessage } from './security.js';
 
 export const TOPIC_MESSAGE =
-  'Mən BAAU və TEC haqqında məlumat vermək üçün yaradılmışam. 😊 Sualında BAAU və ya TEC-i qeyd edə bilərsən. Məsələn: "BAAU-da tələbə həyatı necədir?"';
+  'Mən yalnız BAAU, TEC və universitetdəki tələbə həyatı haqqında kömək edə bilərəm. İstəsən, bu mövzulardan danışaq.';
 
 // ==========================================
 // MƏTNİN NORMALİZASİYASI
