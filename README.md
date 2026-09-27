@@ -27,3 +27,14 @@ npm run build
 
 ## Vacib təhlükəsizlik
 Frontend-də yalnız publishable Supabase açarı istifadə olunur. Heç vaxt service-role və ya `sb_secret_...` açarını frontend/repository-yə əlavə etməyin. Məlumatların qorunması Supabase RLS ilə davam edir.
+
+
+## TECGPT — söhbət + lokal ehtiyat cavabları
+
+Groq konfiqurasiya olunanda model son 8 mesajı və BAAU/TEC bilik bazasından seçilmiş bölmələri görür. Son istifadəçi niyyətini kontekstdə anlayır; assistant tarixçəsi fakt mənbəyi sayılmır. Cavablar yalnız BAAU, TEC və əlaqəli universitet həyatı ilə məhdudlaşdırılır.
+
+Server dəyişənləri: GROQ_API_KEY, istəyə bağlı GROQ_MODEL (default openai/gpt-oss-120b), KV_REST_API_URL, KV_REST_API_TOKEN. Açarı VITE_ prefiksi ilə frontend-ə çıxarmayın.
+
+Model cavabı scope + reply JSON formatındadır. Mövzudan kənar və şəxsi məlumat sorğularında server hazır sərhəd cavabı qaytarır. Modelin semantik qərarı qüsursuz təhlükəsizlik zəmanəti deyil. Yanlış URL, yarımçıq/boş/malformed cavab və provider xətalarında lokal ehtiyat cavabı işləyir; qonaq interfeysi sadə rejimə keçidi göstərir.
+
+Yoxlama: npm run test:security və npm run build. Ətraflı qaydalar: TECGPT-GUARDRAILS.md.

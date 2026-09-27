@@ -9,7 +9,7 @@ import {
 } from './tecgptGuestStorage'
 
 const welcome =
-  'Salam! Mən TECGPT-yəm 👋 Hazırda hesabsız beta test rejimi hazırlanır.'
+  'Salam! Mən TECGPT-yəm 👋 BAAU və TEC haqqında suallarını verə bilərsən.'
 
 function makeTitle(text: string) {
   const clean = text.replace(/\s+/g, ' ').trim()
@@ -136,6 +136,8 @@ export function TecGPTGuestPage() {
       if (!response.ok) {
         throw new Error(data.error || 'TECGPT cavab verə bilmədi.')
       }
+
+      if (data.degraded) setNotice('Hazırda sadə məlumat rejimindəyəm; sərbəst söhbət müvəqqəti əlçatan deyil.')
 
       const reply = String(data.reply ?? '').trim()
       if (!reply) throw new Error('TECGPT boş cavab qaytardı.')
@@ -316,7 +318,7 @@ export function TecGPTGuestPage() {
 
             <p>
               TECGPT beta • Tarixçə bu brauzerdə saxlanılır
-              • AI bağlantısı hazırlanır
+              • BAAU və TEC məlumat köməkçisi
             </p>
           </div>
         </div>

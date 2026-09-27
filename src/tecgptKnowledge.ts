@@ -543,9 +543,11 @@ heyətinin son təsdiqlənmiş məlumatına yönləndir.
 BAAU TEC YERLƏŞMƏ
 ==================================================
 
-BAAU TEC:
-2-ci mərtəbə
-205-ci otaq
+BAAU TEC-in cari otaq və korpus yerləşməsi barədə
+yenilənmiş təsdiqlənmiş məlumat yoxdur.
+
+Köhnə məlumatlarda 2-ci mərtəbə, 205-ci otaq göstərilə bilər,
+amma bunu cari yerləşmə kimi təqdim etmə.
 
 ==================================================
 BAAU TEC ÜZVLÜK QEYDİYYATI
