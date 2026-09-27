@@ -137,6 +137,8 @@ export function TecGPTGuestPage() {
         throw new Error(data.error || 'TECGPT cavab verə bilmədi.')
       }
 
+      if (data.degraded) setNotice('Hazırda sadə məlumat rejimindəyəm; sərbəst söhbət müvəqqəti əlçatan deyil.')
+
       const reply = String(data.reply ?? '').trim()
       if (!reply) throw new Error('TECGPT boş cavab qaytardı.')
 

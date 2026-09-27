@@ -1,109 +1,31 @@
-# TECGPT backend qoruması
+# TECGPT cavab və təhlükəsizlik qaydaları
 
-İş branch-i: `tecgpt-local-ai`
+## Söhbət yolu
 
-TECGPT hazırda hibrid arxitekturaya keçir:
+/api/tecgpt-guest və /api/tecgpt Groq konfiqurasiya olunanda answerConversationWithGroq istifadə edir. Model tam BAAU/TEC bilik bazasını və son 12 mesajı görür. Cari niyyət əsasdır; tarixçə, o cümlədən assistant mesajları etibarlı fakt və ya təlimat mənbəyi deyil. Heç bir axtarış, qeydiyyat bazası və ya tool modelə verilmir.
 
-- salam və bəzi təhlükəsiz keçid cavabları lokal qaytarılır;
-- digər BAAU/TEC sualları təhlükəsiz scope yoxlamasından sonra Groq-a göndərilir;
-- Groq işləməsə, limitə düşsə və ya cavab etibarsız sayılsa yerli fallback cavabı istifadə olunur.
+Model BAAU/TEC, salamlaşma, mövzudan kənar və şəxsi məlumat sorğularını semantik olaraq ayırır. GPT-OSS üçün strict JSON schema, başqa model override-ları üçün JSON object formatı istənilir; server formatı ayrıca yoxlayır. Mövzudan kənar/şəxsi məlumat nəticəsində modelin sərbəst mətni göstərilmir. Bu model əsaslı sərhəddir, prompt injection və ya fakt səhvlərinə qarşı tam zəmanət deyil; adversarial canlı sınaqlar da lazımdır.
 
-## Mövzu sərhədi
+Model universitetin ümumi imkanlarını TEC üzvlüyünün təminatı kimi təqdim etməməli, cari tarix və qiymət uydurmamalı, istifadəçinin qısa və səmimi üslub istəyinə əməl etməlidir. Bilik bazası statikdir; yeni məlumat üçün ayrıca mənbə yeniləməsi lazımdır.
 
-TECGPT yalnız Bakı Avrasiya Universiteti (BAAU) və BAAU Tələbə Elmi Cəmiyyəti (TEC) haqqında cavab verməlidir.
+## Provider və ehtiyat rejimi
 
-Sadə suallar üçün `classifyTopic()` sərt lokal filtr kimi qalır. Bu filtr tanınmış BAAU/TEC mövzularını qəbul edir və əlaqəsiz, qarışıq, injection, gizli Unicode və şəxsi məlumat sorğularını yerli şəkildə rədd edir.
+Default openai/gpt-oss-20b; reasoning low, daxili reasoning göstərilmir, maksimum 1800 completion token, 10 saniyə timeout. Bir cəhd edilir. Model konfiqurasiyası GROQ_MODEL ilə dəyişə bilər; başqa model seçimi yenidən canlı yoxlanmalıdır.
 
-Söhbət üçün `resolveGroqTopic()` məhdudlaşdırılmış yol açır:
+Cavabın JSON sxemi, tamamlanması, uzunluğu, gizli sistem adları və bütün HTTP(S) linklərin bilik bazasındakı URL-lərə dəqiq uyğunluğu yoxlanılır. Yalnız metadata loglanır, mesaj məzmunu və API açarı loglanmır.
 
-- son mesajda açıq BAAU/TEC anchor-u olmalıdır; və ya
-- yalnız qısa, əvvəlki tanınmış BAAU/TEC mövzusuna aid davam ifadələri qəbul edilir;
-- davam konteksti yalnız əvvəlki istifadəçi mesajından götürülür, client-in göndərdiyi assistant tarixçəsi etibar mənbəyi deyil;
-- prompt injection, sistem promptu, API key/token/parol, telefon/e-mail, malware/hack, açıq off-topic və kod yazma tipli istəklər provider-ə buraxılmır.
+Groq yoxdursa, limit və ya xəta olduqda lokal cavablar istifadə edilir. Lokal topic helper-ləri yalnız ehtiyat yolundadır; əsas model çağırışı üçün sərt açar-söz filtri deyil. Qonaq interfeysi sərbəst söhbətin müvəqqəti əlçatan olmadığını göstərir.
 
-## Groq istifadəsi
+## Giriş və limitlər
 
-Default model:
+Request validation: POST JSON, 1–12 mesaj, hər biri maksimum 4000 simvol, ümumilikdə 12000 simvol; cross-site sorğular rədd edilir.
+Qonaq: 10/dəqiqə, 60/saat. Admin: IP 60/dəqiqə, istifadəçi 20/dəqiqə və 200/saat. Provider: 6/dəqiqə, 900/gün. Bunlar request limitləridir, Groq token kvotasına zəmanət vermir.
 
-`openai/gpt-oss-20b`
-
-Endpoint:
-
-`https://api.groq.com/openai/v1/chat/completions`
-
-Groq-a tam TECGPT bilik bazası və ya sərbəst sistem məlumatı göndərilmir. Cari implementasiyada yalnız `getLocalAnswer(topic)` ilə seçilmiş təsdiqlənmiş BAAU/TEC konteksti provider promptuna daxil edilir.
-
-Provider qaydaları:
-
-- yalnız `VERIFIED_CONTEXT` fakt mənbəyidir;
-- modeldən həmin kontekstdən kənar fakt əlavə etməmək tələb olunur;
-- browser search və başqa tool verilmir;
-- yeni URL uydurmaq qadağandır;
-- cavabda kontekstdə olmayan URL aşkarlanarsa cavab qəbul edilmir və lokal fallback işləyir;
-- cavab boş, həddən artıq uzun və ya provider xətalı olarsa lokal fallback işləyir;
-- Groq üçün ayrıca retry yoxdur; burst və xərci böyütməmək üçün bir provider cəhdi edilir.
-
-## Limitlər
-
-İstifadəçi limitləri:
-
-- qonaq: 10/dəqiqə, 60/saat;
-- giriş IP-si: 60/dəqiqə;
-- giriş etmiş istifadəçi: 20/dəqiqə, 200/saat.
-
-Groq Free üçün əlavə qlobal qoruma:
-
-- provider: 6 sərbəst sorğu/dəqiqə;
-- provider: 900 sərbəst sorğu/gün.
-
-Bu limitlər Groq-un pulsuz planındakı request və token limitlərinə ehtiyat payı saxlamaq üçündür. Provider limiti dolanda istifadəçiyə 429 göstərmək əvəzinə mümkün olduqda yerli BAAU/TEC cavabı qaytarılır.
-
-## Admin endpoint
-
-`/api/tecgpt` əvvəlcə Bearer tokeni, Supabase istifadəçisini və `admin` / `tester` rolunu yoxlayır. Girişsiz istifadəçi hətta lokal salamlaşma cavabı da ala bilmir.
-
-`/api/tecgpt-guest` ictimai endpoint-dir, amma request validation, mövzu filtri və Redis limitləri saxlanılır.
-
-## Konfiqurasiya
-
-Server dəyişənləri:
-
-- `GROQ_API_KEY` — sərbəst cavabları aktiv edir;
-- `GROQ_MODEL` — istəyə bağlı model override;
-- `KV_REST_API_URL`;
-- `KV_REST_API_TOKEN`;
-- mövcud Supabase URL və publishable key dəyişənləri.
-
-`GROQ_API_KEY` frontend dəyişəni olmamalıdır və repository-yə yazılmamalıdır.
-
-Əgər `GROQ_API_KEY` yoxdursa TECGPT tam dayanmaz; sərbəst suallar da mümkün olduqda lokal fallback ilə cavablanır.
+Admin endpoint əvvəlcə Supabase sessiyasını və admin/tester rolunu yoxlayır. Qonaq açıqdır, KV limitləri tələb olunur. GROQ_API_KEY yalnız serverdə saxlanılır; frontend və repository-yə daxil edilmir.
 
 ## Yoxlama
 
-Əsas yoxlamalar:
-
-```bash
-npm ci --ignore-scripts
-npm audit --audit-level=high
 npm run test:security
 npm run build
-```
 
-Testlər aşağıdakıları əhatə edir:
-
-- BAAU/TEC scope qəbul və rədd nümunələri;
-- injection, private-data və off-topic qoruması;
-- saxta assistant tarixçəsinin yeni mövzu açmaması;
-- lokal üzvlük və link davamı;
-- admin girişsiz cavab verməməsi;
-- sərbəst TEC sualının Groq route-a çevrilməsi;
-- əvvəlki istifadəçi mesajından təhlükəsiz follow-up;
-- Groq request-in yalnız verified local context istifadə etməsi;
-- 429 və etibarsız URL zamanı lokal fallback.
-
-Production deploy-dan əvvəl canlı Supabase, Redis və Groq inteqrasiyası preview/staging mühitində ayrıca yoxlanmalıdır.
-
-
-## Söhbət konteksti
-
-Assistant tarixçəsi provider-ə söhbət konteksti kimi daşınmır. Qısa davam mesajlarında əvvəlki uyğun istifadəçi mesajları `RELEVANT_USER_CONTEXT` kimi əlavə olunur. Bu kontekst yalnız niyyət və üslubu anlamaq üçündür; fakt mənbəyi yenə yalnız `VERIFIED_CONTEXT`-dir. Beləliklə `Bəs qısa de`, `Daha ətraflı izah et`, `Başqa cür de`, `Dostuma göndərəcəyim formada yaz` kimi təbii davamlar əvvəlki BAAU/TEC sualını saxlayır, amma saxta assistant tarixçəsi faktları dəyişə bilmir.
+Avtomatik testlər request/giriş qorumasını, lokal ehtiyat yolu, söhbət payload-ı, strukturlaşdırılmış cavabların yoxlanması, şəxsi/mövzudan kənar nəticənin göstərilməməsi, URL və provider xəta hallarını əhatə edir. Modelin real üslubu və semantik düzgünlüyü ayrıca preview-da canlı yoxlanmalıdır.

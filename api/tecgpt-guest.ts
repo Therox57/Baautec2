@@ -89,6 +89,7 @@ export default async function handler(req: any, res: any) {
             reply: groq.reply,
             model: groq.model,
             provider: "groq",
+            rejected: groq.rejected ?? false,
           });
         }
       } catch (error) {

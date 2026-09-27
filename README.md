@@ -29,21 +29,12 @@ npm run build
 Frontend-də yalnız publishable Supabase açarı istifadə olunur. Heç vaxt service-role və ya `sb_secret_...` açarını frontend/repository-yə əlavə etməyin. Məlumatların qorunması Supabase RLS ilə davam edir.
 
 
-## TECGPT — lokal + Groq
+## TECGPT — söhbət + lokal ehtiyat cavabları
 
-TECGPT BAAU/TEC mövzusunu lokal təhlükəsizlik filtri ilə yoxlayır. Salam və bəzi sadə keçid cavabları lokal qalır; digər təsdiqlənmiş BAAU/TEC söhbətləri Groq tərəfindən verified lokal faktlar əsasında təbii formada qurulur.
+Groq konfiqurasiya olunanda model son 12 mesajı və BAAU/TEC bilik bazasını görür. Son istifadəçi niyyətini kontekstdə anlayır; assistant tarixçəsi fakt mənbəyi sayılmır. Cavablar yalnız BAAU, TEC və əlaqəli universitet həyatı ilə məhdudlaşdırılır.
 
-Server environment dəyişənləri:
+Server dəyişənləri: GROQ_API_KEY, istəyə bağlı GROQ_MODEL (default openai/gpt-oss-20b), KV_REST_API_URL, KV_REST_API_TOKEN. Açarı VITE_ prefiksi ilə frontend-ə çıxarmayın.
 
-```text
-GROQ_API_KEY=...
-GROQ_MODEL=openai/gpt-oss-20b
-KV_REST_API_URL=...
-KV_REST_API_TOKEN=...
-```
+Model cavabı scope + reply JSON formatındadır. Mövzudan kənar və şəxsi məlumat sorğularında server hazır sərhəd cavabı qaytarır. Modelin semantik qərarı qüsursuz təhlükəsizlik zəmanəti deyil. Yanlış URL, yarımçıq/boş/malformed cavab və provider xətalarında lokal ehtiyat cavabı işləyir; qonaq interfeysi sadə rejimə keçidi göstərir.
 
-`GROQ_API_KEY` heç vaxt `VITE_` prefiksi ilə frontend-ə çıxarılmamalıdır. Açar yoxdursa TECGPT lokal fallback ilə işləməyə davam edir.
-
-Groq konfiqurasiya olunubsa, normal BAAU/TEC sualları və təhlükəsiz davam mesajları Groq-a gedir. Provider limit/xəta zamanı TECGPT lokal cavaba geri dönür. Assistant tarixçəsi fakt mənbəyi kimi provider-ə ötürülmür; davam konteksti yalnız uyğun istifadəçi mesajlarından qurulur.
-
-Ətraflı təhlükəsizlik qaydaları üçün `TECGPT-GUARDRAILS.md` faylına baxın.
+Yoxlama: npm run test:security və npm run build. Ətraflı qaydalar: TECGPT-GUARDRAILS.md.
