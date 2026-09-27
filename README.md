@@ -31,9 +31,9 @@ Frontend-də yalnız publishable Supabase açarı istifadə olunur. Heç vaxt se
 
 ## TECGPT — söhbət + lokal ehtiyat cavabları
 
-Groq konfiqurasiya olunanda model son 12 mesajı və BAAU/TEC bilik bazasını görür. Son istifadəçi niyyətini kontekstdə anlayır; assistant tarixçəsi fakt mənbəyi sayılmır. Cavablar yalnız BAAU, TEC və əlaqəli universitet həyatı ilə məhdudlaşdırılır.
+Groq konfiqurasiya olunanda model son 8 mesajı və BAAU/TEC bilik bazasından seçilmiş bölmələri görür. Son istifadəçi niyyətini kontekstdə anlayır; assistant tarixçəsi fakt mənbəyi sayılmır. Cavablar yalnız BAAU, TEC və əlaqəli universitet həyatı ilə məhdudlaşdırılır.
 
-Server dəyişənləri: GROQ_API_KEY, istəyə bağlı GROQ_MODEL (default openai/gpt-oss-20b), KV_REST_API_URL, KV_REST_API_TOKEN. Açarı VITE_ prefiksi ilə frontend-ə çıxarmayın.
+Server dəyişənləri: GROQ_API_KEY, istəyə bağlı GROQ_MODEL (default openai/gpt-oss-120b), KV_REST_API_URL, KV_REST_API_TOKEN. Açarı VITE_ prefiksi ilə frontend-ə çıxarmayın.
 
 Model cavabı scope + reply JSON formatındadır. Mövzudan kənar və şəxsi məlumat sorğularında server hazır sərhəd cavabı qaytarır. Modelin semantik qərarı qüsursuz təhlükəsizlik zəmanəti deyil. Yanlış URL, yarımçıq/boş/malformed cavab və provider xətalarında lokal ehtiyat cavabı işləyir; qonaq interfeysi sadə rejimə keçidi göstərir.
 

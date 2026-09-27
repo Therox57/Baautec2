@@ -873,7 +873,7 @@ test('təbii follow-up xüsusi regex olmadan əvvəlki TEC mövzusunu daşıyır
 });
 
 
-test('əsas chat yolu bütün verified knowledge və real söhbət konteksti ilə Groq-a gedir', async () => {
+test('əsas chat yolu uyğun verified knowledge və real söhbət konteksti ilə Groq-a gedir', async () => {
   let body: any;
 
   const messages = [
