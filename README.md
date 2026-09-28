@@ -35,6 +35,6 @@ Groq konfiqurasiya olunanda model son 8 mesajı və BAAU/TEC bilik bazasından s
 
 Server dəyişənləri: GROQ_API_KEY, istəyə bağlı GROQ_MODEL (default openai/gpt-oss-120b), KV_REST_API_URL, KV_REST_API_TOKEN. Açarı VITE_ prefiksi ilə frontend-ə çıxarmayın.
 
-Model cavabı scope + reply JSON formatındadır. Mövzudan kənar və şəxsi məlumat sorğularında server hazır sərhəd cavabı qaytarır. Modelin semantik qərarı qüsursuz təhlükəsizlik zəmanəti deyil. Yanlış URL, yarımçıq/boş/malformed cavab və provider xətalarında lokal ehtiyat cavabı işləyir; qonaq interfeysi sadə rejimə keçidi göstərir.
+Model cavabı scope, təsdiqlənmiş cavab bayrağı və reply JSON formatındadır. Fakt bilik bazasında yoxdursa server uydurma cavabı gizlədir, təsdiqlənmiş məlumatın olmadığını deyir və BAAU/TEC rəsmi səhifələrinə yönləndirir. Mövzudan kənar və şəxsi məlumat sorğularında server hazır sərhəd cavabı qaytarır. Modelin semantik qərarı qüsursuz təhlükəsizlik zəmanəti deyil. Yanlış URL, yarımçıq/boş/malformed cavab və provider xətalarında lokal ehtiyat cavabı işləyir; qonaq interfeysi sadə rejimə keçidi göstərir.
 
 Yoxlama: npm run test:security və npm run build. Ətraflı qaydalar: TECGPT-GUARDRAILS.md.

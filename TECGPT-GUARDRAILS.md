@@ -4,7 +4,7 @@
 
 /api/tecgpt-guest və /api/tecgpt Groq konfiqurasiya olunanda answerConversationWithGroq istifadə edir. Model BAAU/TEC bilik bazasından seçilmiş bölmələri və son 8 mesajı görür. Cari niyyət əsasdır; tarixçə, o cümlədən assistant mesajları etibarlı fakt və ya təlimat mənbəyi deyil. Heç bir axtarış, qeydiyyat bazası və ya tool modelə verilmir.
 
-Model BAAU/TEC, salamlaşma, mövzudan kənar və şəxsi məlumat sorğularını semantik olaraq ayırır. GPT-OSS üçün strict JSON schema, başqa model override-ları üçün JSON object formatı istənilir; server formatı ayrıca yoxlayır. Mövzudan kənar/şəxsi məlumat nəticəsində modelin sərbəst mətni göstərilmir. Bu model əsaslı sərhəddir, prompt injection və ya fakt səhvlərinə qarşı tam zəmanət deyil; adversarial canlı sınaqlar da lazımdır.
+Model BAAU/TEC, salamlaşma, mövzudan kənar və şəxsi məlumat sorğularını semantik olaraq ayırır; konkret fakt bazada yoxdursa bunu ayrıca bildirir və sərbəst cavabı göstərmir. GPT-OSS üçün strict JSON schema, başqa model override-ları üçün JSON object formatı istənilir; server formatı ayrıca yoxlayır. Mövzudan kənar/şəxsi məlumat və bazada olmayan konkret fakt nəticəsində modelin sərbəst mətni göstərilmir. Bilinməyən TEC sualı BAAU rəsmi saytına və TEC Instagram səhifəsinə, digər bilinməyən BAAU sualı BAAU rəsmi saytına yönləndirilir. Bu model əsaslı sərhəddir, prompt injection və ya fakt səhvlərinə qarşı tam zəmanət deyil; adversarial canlı sınaqlar da lazımdır.
 
 Model universitetin ümumi imkanlarını TEC üzvlüyünün təminatı kimi təqdim etməməli, cari tarix və qiymət uydurmamalı, istifadəçinin qısa və səmimi üslub istəyinə əməl etməlidir. Bilik bazası statikdir; yeni məlumat üçün ayrıca mənbə yeniləməsi lazımdır.
 
