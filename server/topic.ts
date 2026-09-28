@@ -257,6 +257,21 @@ export function classifyTopic(
 
   const text = normalize(raw);
 
+  // TECGPT is specifically a BAAU/TEC assistant, so a short, explicit
+  // student-life topic is already anchored by the product context. Keep this
+  // exception narrow; generic words such as "həyat" remain unclassified.
+  if (
+    /^(telebe(lerin)?\s+heyat(i|ini|inda|indan|inden)?)(\s+(haqqinda|barede|danis|danisin))?[?!.,]*$/u.test(
+      text.trim()
+    )
+  ) {
+    return {
+      id: 'student-life',
+      question:
+        'BAAU-da tələbə həyatı, tələbə təşkilatları və tələbələrin iştirak edə biləcəyi fəaliyyətlər',
+    };
+  }
+
   // Naməlum simvolları və rəqəmli tapşırıqları
   // avtomatik qəbul etmə.
   if (/[^a-z\s?!.,'’-]/u.test(text)) {

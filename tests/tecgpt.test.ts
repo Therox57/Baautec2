@@ -22,6 +22,17 @@ test('scope accepts common Azerbaijani and English institutional questions', () 
   }
 });
 
+test('standalone student-life prompts inherit the dedicated BAAU/TEC context', () => {
+  for (const text of [
+    'tələbə həyatı',
+    'tələbə həyatını danış',
+    'tələbələrin həyatı haqqında',
+  ]) {
+    assert.equal(classify(text)?.id, 'student-life', text);
+  }
+  assert.equal(classify('həyat nədir?'), null);
+});
+
 test('strict local scope rejects unrelated, mixed, injected, encoded and private requests', () => {
   for (const text of [
     'Python kodu yaz',

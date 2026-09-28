@@ -318,7 +318,7 @@ export function TecGPTGuestPage() {
 
             <p>
               TECGPT beta • Tarixçə bu brauzerdə saxlanılır
-              • BAAU və TEC məlumat köməkçisi
+              • BAAU və TEC məlumat köməkçisi • Cavabsız universitet/TEC sualları admin yoxlaması üçün anonim saxlanıla bilər; şəxsi məlumat yazma.
             </p>
           </div>
         </div>

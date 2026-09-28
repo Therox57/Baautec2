@@ -17,6 +17,8 @@ import {
   LOCAL_UNKNOWN_REPLY,
 } from "../server/localAnswers.js";
 
+import { getApprovedAnswerContext, recordUnansweredQuestion } from "../server/unansweredQuestions.js";
+
 import {
   answerConversationWithGroq,
   getNaturalFallbackForConversation,
@@ -80,9 +82,15 @@ export default async function handler(req: any, res: any) {
         await enforceLimit("provider-minute", "groq");
         await enforceLimit("provider-day", "groq");
 
-        const groq = await answerConversationWithGroq(
-          messages
-        );
+        const latestQuestion = messages.at(-1)!.text;
+        let approvedKnowledge = "";
+        try { approvedKnowledge = await getApprovedAnswerContext(latestQuestion); }
+        catch { console.warn("[TECGPT] Approved-answer lookup unavailable"); }
+        const groq = await answerConversationWithGroq(messages, { approvedKnowledge });
+        if (groq?.needsReview) {
+          try { await recordUnansweredQuestion(latestQuestion); }
+          catch { console.warn("[TECGPT] Unanswered-question save unavailable"); }
+        }
 
         if (groq) {
           return res.status(200).json({
@@ -133,6 +141,10 @@ export default async function handler(req: any, res: any) {
         messages,
         topic
       ) ?? LOCAL_UNKNOWN_REPLY;
+    if (fallback === LOCAL_UNKNOWN_REPLY) {
+      try { await recordUnansweredQuestion(messages.at(-1)!.text); }
+      catch { console.warn("[TECGPT] Unanswered-question save unavailable"); }
+    }
 
     return res.status(200).json({
       reply: fallback,
