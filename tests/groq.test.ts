@@ -1092,6 +1092,20 @@ test('database-də olmayan TEC otaq nömrəsi uydurulmur və rəsmi TEC səhifə
   assert.doesNotMatch(result?.reply ?? '', /205|otaq nömrəsi \d/i);
 });
 
+test('short student-life prompt gets its verified BAAU answer after an unrelated turn', async () => {
+  const result = await answerConversationWithGroq([
+    {role:'user',text:'Mənə GTA 5 yükləməyi öyrət'},
+    {role:'assistant',text:'Mən yalnız BAAU və TEC haqqında kömək edə bilərəm.'},
+    {role:'user',text:'tələbə həyatı'},
+  ], {
+    apiKey:'test',
+    fetch:(async () => Response.json({choices:[{finish_reason:'stop',message:{content:JSON.stringify({scope:'baau_tec',has_verified_answer:false,reply:''})}}]})) as typeof fetch,
+  });
+  assert.match(result?.reply ?? '', /BAAU-da tələbə həyatı yalnız dərslərlə məhdudlaşmır/);
+  assert.match(result?.reply ?? '', /TEC və TGT/);
+  assert.doesNotMatch(result?.reply ?? '', /məndə təsdiqlənmiş məlumat yoxdur/i);
+});
+
 test('database-də olmayan BAAU məlumatı yalnız rəsmi universitet saytına yönləndirir', async () => {
   const result = await answerConversationWithGroq([{role:'user',text:'BAAU otaqlarından hansında dekan oturur?'}], {
     apiKey:'test',fetch:(async () => Response.json({choices:[{finish_reason:'stop',message:{content:JSON.stringify({scope:'baau_tec',has_verified_answer:false,reply:''})}}]})) as typeof fetch,
