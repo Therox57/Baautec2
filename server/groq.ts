@@ -269,6 +269,7 @@ function containsUnsupportedDetail(
 
 export type GroqResult = {
   rejected?: boolean;
+  needsReview?: boolean;
   reply: string;
   model: string;
 };
@@ -277,6 +278,7 @@ export type GroqDependencies = {
   fetch: typeof globalThis.fetch;
   apiKey?: string;
   model?: string;
+  approvedKnowledge?: string;
 };
 
 function latestUserText(messages: ChatMessage[]): string {
@@ -542,7 +544,10 @@ export async function answerConversationWithGroq(
       content: message.role === 'assistant' ? message.text.slice(0, 900) : message.text,
     }));
 
-  const verifiedKnowledge = getChatKnowledge(messages);
+  const verifiedKnowledge = [
+    getChatKnowledge(messages),
+    dependencies.approvedKnowledge?.trim(),
+  ].filter(Boolean).join("\n\n");
   const systemPrompt = [
     'You are TECGPT, the BAAU (Bakı Avrasiya Universiteti) and its Tələbə Elmi Cəmiyyəti (TEC) assistant. You are not a general-purpose assistant.',
     'Treat the latest user message as the current intent. Understand informal Azerbaijani, typos, disagreement and short follow-ups using conversation history. You are not a FAQ menu or keyword bot (FAQ menyusu və ya açar-söz botu deyilsən). In this dedicated BAAU/TEC assistant, a standalone phrase such as “tələbə həyatı” or “tələbə həyatını danış” is an in-scope request for the verified general student-life overview, even if the previous turn was off-topic.',
@@ -642,7 +647,7 @@ export async function answerConversationWithGroq(
 
       const reply = 'Bu barədə məndə təsdiqlənmiş məlumat yoxdur, məlumatı uydurmaq istəmirəm. BAAU-nun rəsmi saytı: [**https://baau.edu.az**](https://baau.edu.az). TEC-in yenilənən məlumatı üçün rəsmi səhifəyə bax: [**https://www.instagram.com/baau__tec/**](https://www.instagram.com/baau__tec/)';
       console.info('[TECGPT] Verified information unavailable', { model, scope });
-      return { model, reply };
+      return { model, reply, needsReview: true };
     }
     if (scope === 'out_of_scope' || scope === 'private_data') {
       console.info('[TECGPT] Conversation rejected', { model, scope });
@@ -652,7 +657,7 @@ export async function answerConversationWithGroq(
     }
     const reply = rawReply.trim();
     const reason = !reply ? 'empty' : reply.length > 3200 ? 'too_long'
-      : containsUnknownUrl(reply, fullKnowledgeUrls()) ? 'unknown_url'
+      : containsUnknownUrl(reply, [fullKnowledgeUrls(), verifiedKnowledge].join("\n")) ? 'unknown_url'
       : leaksInternalData(reply) ? 'internal_data'
       : containsUnsupportedDetail(reply, verifiedKnowledge) ? 'unsupported_detail' : null;
     if (reason) {

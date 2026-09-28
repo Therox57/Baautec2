@@ -818,6 +818,59 @@ function AdminLogin(){
 function Unauthorized({email}:{email:string}){return <main className="center-page"><div className="card login-card center-text"><ShieldCheck className="muted"/><h1>Giriş icazəsi yoxdur</h1><p className="muted">{email} hesabına administrator səlahiyyəti verilməyib.</p><button className="primary-btn" onClick={()=>supabase.auth.signOut()}><LogOut size={18}/> Çıxış</button></div></main>}
 
 
+function UnansweredQuestionsCard(){
+  type QueueItem={id:string;question:string;status:'pending'|'approved'|'dismissed';answer?:string;sourceUrl?:string;createdAt:string;reviewedAt?:string}
+  const [status,setStatus]=useState<'pending'|'approved'|'dismissed'>('pending')
+  const [items,setItems]=useState<QueueItem[]>([])
+  const [answers,setAnswers]=useState<Record<string,string>>({})
+  const [sources,setSources]=useState<Record<string,string>>({})
+  const [loading,setLoading]=useState(false)
+  const [saving,setSaving]=useState<string|null>(null)
+  const [error,setError]=useState('')
+  const [notice,setNotice]=useState('')
+  async function load(){
+    setLoading(true);setError('');setNotice('')
+    try{
+      const {data}=await supabase.auth.getSession();const token=data.session?.access_token
+      if(!token)throw new Error('Admin sessiyası tapılmadı. Yenidən daxil ol.')
+      const response=await fetch('/api/admin/tecgpt-questions?status='+status,{headers:{Authorization:'Bearer '+token},cache:'no-store'})
+      const result=await response.json().catch(()=>({})) as {questions?:QueueItem[];error?:string}
+      if(!response.ok)throw new Error(result.error||'Suallar yüklənmədi.')
+      const list=result.questions??[];setItems(list)
+      setAnswers(previous=>Object.fromEntries(list.map(item=>[item.id,previous[item.id]??item.answer??''])))
+      setSources(previous=>Object.fromEntries(list.map(item=>[item.id,previous[item.id]??item.sourceUrl??''])))
+    }catch(err){setError(err instanceof Error?err.message:'Xəta baş verdi.')}finally{setLoading(false)}
+  }
+  useEffect(()=>{void load()},[status])
+  async function update(item:QueueItem,nextStatus:'approved'|'dismissed'){
+    setSaving(item.id);setError('');setNotice('')
+    try{
+      const {data}=await supabase.auth.getSession();const token=data.session?.access_token
+      if(!token)throw new Error('Admin sessiyası tapılmadı. Yenidən daxil ol.')
+      const payload={id:item.id,status:nextStatus,answer:answers[item.id]??'',sourceUrl:sources[item.id]??''}
+      const response=await fetch('/api/admin/tecgpt-questions',{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify(payload)})
+      const result=await response.json().catch(()=>({})) as {error?:string}
+      if(!response.ok)throw new Error(result.error||'Dəyişiklik yadda saxlanmadı.')
+      setNotice(nextStatus==='approved'?'Cavab təsdiqləndi və botun yoxlanmış məlumatlarına əlavə olundu.':'Sual arxivləndi.')
+      await load()
+    }catch(err){setError(err instanceof Error?err.message:'Xəta baş verdi.')}finally{setSaving(null)}
+  }
+  return <section className="card unanswered-card">
+    <div className="unanswered-head"><div><h2>TECGPT — Cavabsız suallar</h2><p className="muted">Botun cavab tapa bilmədiyi BAAU/TEC suallarını rəsmi mənbə ilə yoxlayıb təsdiqlə.</p></div><button className="outline-btn" onClick={()=>void load()} disabled={loading}>Yenilə</button></div>
+    <div className="unanswered-toolbar"><div className="unanswered-tabs">{([['pending','Gözləyənlər'],['approved','Təsdiqlənənlər'],['dismissed','Arxiv']] as const).map(([value,label])=><button key={value} className={status===value?'active':''} onClick={()=>setStatus(value)}>{label}</button>)}</div><span>{items.length} sual</span></div>
+    {error?<p className="field-error">{error}</p>:null}{notice?<p className="admin-success">{notice}</p>:null}
+    {loading?<div className="loading-box"><Loader2 className="spin"/></div>:items.length===0?<div className="empty">Bu bölmədə sual yoxdur.</div>:<div className="unanswered-list">{items.map(item=><article className="unanswered-item" key={item.id}>
+      <div className="unanswered-question"><span>{new Date(item.createdAt).toLocaleString('az-AZ')}</span><p>{item.question}</p></div>
+      <label><span>Təsdiqlənmiş cavab</span><textarea className="control" rows={3} value={answers[item.id]??''} onChange={event=>setAnswers(current=>({...current,[item.id]:event.target.value}))} placeholder="Yalnız rəsmi mənbənin təsdiqlədiyi cavabı yaz" readOnly={status==='dismissed'}/></label>
+      <label><span>Rəsmi mənbə linki (baau.edu.az və ya TEC Instagram)</span><input className="control" type="url" value={sources[item.id]??''} onChange={event=>setSources(current=>({...current,[item.id]:event.target.value}))} placeholder="https://baau.edu.az/..." readOnly={status==='dismissed'}/></label>
+      {item.status==='approved'&&item.reviewedAt?<small className="muted">Təsdiq tarixi: {new Date(item.reviewedAt).toLocaleString('az-AZ')}</small>:null}
+      <div className="unanswered-actions">{status!=='dismissed'?<button className="primary-btn" disabled={saving===item.id||!answers[item.id]?.trim()||!sources[item.id]?.trim()} onClick={()=>void update(item,'approved')}>{saving===item.id?'Saxlanır...':item.status==='approved'?'Yenilə və təsdiqlə':'Təsdiqlə'}</button>:null}{status==='pending'?<button className="outline-btn" disabled={saving===item.id} onClick={()=>void update(item,'dismissed')}>Arxivlə</button>:null}</div>
+    </article>)}</div>}
+    <p className="unanswered-footnote">Sual anonim saxlanılır; şəxsi məlumat ehtimalı olan mətnlər növbəyə əlavə edilmir. Növbə qeydləri 180 gün sonra silinir.</p>
+  </section>
+}
+
+
 function AddAdminCard(){
   const [email,setEmail] = useState('')
   const [password,setPassword] = useState('')
@@ -910,6 +963,7 @@ function AdminDashboard({email}:{email:string}){
   function exportCsv(){const headers=['Ad','Soyad','Ata adı','Doğum tarixi','Cins','Telefon','E-poçt','Fakültə','İxtisas','Kurs','Motivasiya','Dillər','Bacarıqlar','Əlavə qeyd','Qeydiyyat tarixi']; const lines=filtered.map(r=>[r.first_name,r.last_name,r.father_name,r.birth_date,r.gender,r.phone,r.email,r.faculty,r.specialty,r.course,r.membership_reason,(r.languages??[]).map(l=>`${l.language} (${l.level})`).join('; '),r.skills??'',r.additional_note??'',formatDate(r.created_at)].map(csvCell).join(',')); const url=URL.createObjectURL(new Blob(['\uFEFF'+[headers.join(','),...lines].join('\n')],{type:'text/csv;charset=utf-8'})); const a=document.createElement('a');a.href=url;a.download=`tec-qeydiyyatlar-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(url)}
   return <main className="page admin-page"><header className="site-header admin-header"><div className="content wide header-row"><div><h1>TEC İdarəetmə Paneli</h1><p>{email}</p></div><div className="header-actions"><button className="ghost-light" onClick={()=>window.location.href='/tecgpt-test'}>TECGPT Beta</button><button className="ghost-light" onClick={()=>void load()}>Yenilə</button><button className="ghost-light" onClick={()=>supabase.auth.signOut()}><LogOut size={16}/> Çıxış</button></div></div></header>
     <div className="content wide admin-content">{loadError?<div className="card alert-error">{loadError}</div>:null}<div className="stats-grid">{[['Ümumi qeydiyyat sayı',rows.length],['Bu gün qeydiyyatdan keçənlər',todayCount],['Bu həftə qeydiyyatdan keçənlər',weekCount]].map(([label,value])=><div className="card stat" key={String(label)}><p>{label}</p><strong>{value}</strong></div>)}</div>
+      <UnansweredQuestionsCard />
       <AddAdminCard />
       <div className="card filters"><div className="search-wrap"><Search size={18}/><input className="control" placeholder="Ad və ya soyad üzrə axtarış" value={search} onChange={e=>{setSearch(e.target.value);setPage(1)}}/></div><div className="filter-grid"><select className="control" value={faculty} onChange={e=>{setFaculty(e.target.value);setPage(1)}}><option value="">Bütün fakültələr</option>{faculties.map(x=><option key={x}>{x}</option>)}</select><select className="control" value={specialty} onChange={e=>{setSpecialty(e.target.value);setPage(1)}}><option value="">Bütün ixtisaslar</option>{specialties.map(x=><option key={x}>{x}</option>)}</select><select className="control" value={course} onChange={e=>{setCourse(e.target.value);setPage(1)}}><option value="">Bütün kurslar</option>{courses.map(x=><option key={x}>{x}</option>)}</select><select className="control" value={sort} onChange={e=>setSort(e.target.value as 'new'|'old')}><option value="new">Əvvəlcə yenilər</option><option value="old">Əvvəlcə köhnələr</option></select></div><button className="outline-btn" onClick={exportCsv}><Download size={16}/> CSV olaraq yüklə</button></div>
       <div className="card records">{loading?<div className="loading-box"><Loader2 className="spin"/></div>:filtered.length===0?<div className="empty">Qeydiyyat tapılmadı.</div>:<><div className="mobile-cards">{pageRows.map(r=><button key={r.id} className="member-card" onClick={()=>setSelected(r)}><div className="member-top"><strong>{r.first_name} {r.last_name}</strong><span>{r.course}</span></div><p>{r.faculty}</p><p>{r.specialty}</p><div className="member-meta"><span>{r.phone}</span><span>{formatDate(r.created_at)}</span></div></button>)}</div><div className="desktop-table-wrap"><table><thead><tr><th>Ad Soyad</th><th>Fakültə</th><th>İxtisas</th><th>Kurs</th><th>Telefon</th><th>E-poçt</th><th>Qeydiyyat tarixi</th></tr></thead><tbody>{pageRows.map(r=><tr key={r.id} onClick={()=>setSelected(r)}><td><strong>{r.first_name} {r.last_name}</strong></td><td>{r.faculty}</td><td>{r.specialty}</td><td>{r.course}</td><td>{r.phone}</td><td>{r.email}</td><td>{formatDate(r.created_at)}</td></tr>)}</tbody></table></div></>}</div>

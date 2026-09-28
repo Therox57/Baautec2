@@ -1091,6 +1091,7 @@ test('database-də olmayan TEC məlumatı istifadəçinin istədiyi rəsmi mənb
   });
   assert.equal(result?.reply, 'Bu barədə məndə təsdiqlənmiş məlumat yoxdur, məlumatı uydurmaq istəmirəm. BAAU-nun rəsmi saytı: [**https://baau.edu.az**](https://baau.edu.az). TEC-in yenilənən məlumatı üçün rəsmi səhifəyə bax: [**https://www.instagram.com/baau__tec/**](https://www.instagram.com/baau__tec/)');
   assert.doesNotMatch(result?.reply ?? '', /205|otaq nömrəsi \d/i);
+  assert.equal(result?.needsReview, true);
 });
 
 test('short student-life prompt gets its verified BAAU answer after an unrelated turn', async () => {

@@ -5,9 +5,9 @@ import type { Topic } from './topic.js';
 // ==========================================
 
 export const LOCAL_UNKNOWN_REPLY =
-  'Bu barədə məndə təsdiqlənmiş məlumat yoxdur. ' +
-  'Daha dəqiq məlumat üçün BAAU-nun rəsmi saytına ' +
-  'və ya TEC-in rəsmi Instagram hesabına baxa bilərsən. 😊';
+  'Bu barədə məndə təsdiqlənmiş məlumat yoxdur, məlumatı uydurmaq istəmirəm. ' +
+  'BAAU-nun rəsmi saytı: [**https://baau.edu.az**](https://baau.edu.az). ' +
+  'TEC-in yenilənən məlumatı üçün rəsmi səhifəyə bax: [**https://www.instagram.com/baau__tec/**](https://www.instagram.com/baau__tec/)';
 
 export const LOCAL_OFF_TOPIC_REPLY =
   'Mən BAAU və TEC haqqında məlumat vermək üçün yaradılmışam. 😊 ' +
