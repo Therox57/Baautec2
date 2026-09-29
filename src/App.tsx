@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 're
 import {
   CheckCircle2,
   Download,
-  GraduationCap,
   Loader2,
   LogOut,
   Search,
@@ -194,7 +193,7 @@ function MembershipPage() {
   if (done) return <main className="center-page"><div className="card success-card"><CheckCircle2 className="success-icon"/><h1>Qeydiyyatınız uğurla tamamlandı!</h1><p>Tələbə Elmi Cəmiyyətinə göstərdiyiniz marağa görə təşəkkür edirik.</p></div></main>
 
   return <main className="page">
-    <header className="site-header"><div className="header-inner"><div className="cap-badge"><GraduationCap/></div><p>BAKI AVRASİYA UNİVERSİTETİ</p><span>TƏLƏBƏ ELMİ CƏMİYYƏTİ</span></div></header>
+    <header className="site-header"><div className="header-inner"><div className="cap-badge"><img src={LOGO_URL} alt="BAAU TEC loqosu" className="cap-logo" /></div><p>BAKI AVRASİYA UNİVERSİTETİ</p><span>TƏLƏBƏ ELMİ CƏMİYYƏTİ</span></div></header>
     <div className="content narrow">
       <div className="card hero-card"><h1>TEC-ə Üzvlük Formu</h1><p>Tələbə Elmi Cəmiyyətinə üzv olmaq üçün aşağıdakı məlumatları doldurun.</p></div>
       <form onSubmit={submit} noValidate className="form-stack">
