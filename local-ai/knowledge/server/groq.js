@@ -371,7 +371,7 @@ export async function answerConversationWithGroq(messages, dependencies = {}) {
         content: message.role === 'assistant' ? message.text.slice(0, 900) : message.text,
     }));
     const verifiedKnowledge = [
-        getChatKnowledge(messages),
+        dependencies.knowledgeContext ?? getChatKnowledge(messages),
         dependencies.approvedKnowledge?.trim(),
     ].filter(Boolean).join("\n\n");
     const systemPrompt = [
@@ -458,17 +458,6 @@ export async function answerConversationWithGroq(messages, dependencies = {}) {
         if (typeof rawReply !== 'string' || typeof hasVerifiedAnswer !== 'boolean' || !['baau_tec', 'smalltalk', 'out_of_scope', 'private_data'].includes(String(scope)))
             return null;
         if (scope === 'baau_tec' && !hasVerifiedAnswer) {
-            const latestQuestion = messages.at(-1);
-            const shortStudentLifeTopic = latestQuestion?.role === 'user'
-                ? classifyTopic([latestQuestion])
-                : null;
-            if (shortStudentLifeTopic?.id === 'student-life') {
-                const verifiedAnswer = getLocalAnswer(shortStudentLifeTopic);
-                if (verifiedAnswer) {
-                    console.info('[TECGPT] Used verified student-life answer after model uncertainty', { model });
-                    return { model, reply: verifiedAnswer };
-                }
-            }
             const reply = 'Bu barədə məndə təsdiqlənmiş məlumat yoxdur, məlumatı uydurmaq istəmirəm. BAAU-nun rəsmi saytı: [**https://baau.edu.az**](https://baau.edu.az). TEC-in yenilənən məlumatı üçün rəsmi səhifəyə bax: [**https://www.instagram.com/baau__tec/**](https://www.instagram.com/baau__tec/)';
             console.info('[TECGPT] Verified information unavailable', { model, scope });
             return { model, reply, needsReview: true };

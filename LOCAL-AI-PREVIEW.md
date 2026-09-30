@@ -13,3 +13,11 @@ Checks: npm run test:security and npm run build. Targeted language/meaning check
 The tested local AI source snapshot is versioned in local-ai/. It requires the existing Ollama qwen3.5:9b-best import; weights and Cloudflare executables remain local. Runtime source improvements include context-sensitive source selection, editorial review, and conservative language and response-length checks.
 
 Owner-maintained persona.mjs records TEC's general social activity (owner confirmed 2026-10-01), separately from visitor claims. Joining/comparison advice presents TEC positively without inventing events or disparaging TGT. Identity questions use configured assistant metadata. Unknown institutional facts retain the source fallback.
+
+## General understanding checks
+
+The local path has no greeting/identity phrase-to-answer routing, student-life canned fallback, or fast fragment bank. Both local modes generate text with Qwen3.5 9B. A separate model call interprets intent and missing context before source retrieval; final replies are checked for constraints, grounding and language, with one bounded repair attempt when required. Quality checks are performed by the same model and can make mistakes. Unknown-fact and off-topic messages are deliberately fixed product policies, not a general answer bank.
+
+Run deterministic response-contract checks with node --test local-ai/tests/contract.test.mjs. Run live varied-intent checks with node local-ai/tests/semantic-general.mjs; it needs the existing local Ollama model and writes its generated corpus and results to the temporary tecgpt-general-qa directory. Set TECGPT_TEST_SEED to reproduce a run. These checks exercise varied wording, context, negation, writing, planning, known and missing facts, topic switches and injection; they cannot prove correctness for all possible messages.
+
+The Windows runtime contains semantic-general-results.json, semantic-planner-results.json, semantic-final-results.json and semantic-latest-results.json from successive investigation versions. The first complete broad run passed 16/18 coarse checks, but manual review found additional formatting, grounding and meaning problems. Subsequent changes address scope/type contradictions, clarification/unknown confusion and identity metadata. These earlier artifacts are not proof that the current model is error-free.
