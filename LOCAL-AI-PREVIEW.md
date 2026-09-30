@@ -1,6 +1,6 @@
 # Local 9B preview
 
-This branch can route TECGPT chat requests to the owner's local Qwen3.5 9B model. It is enabled only when VERCEL_ENV is preview and both TECGPT_LOCAL_URL and TECGPT_LOCAL_SECRET are configured. Set these variables only for the tecgpt-local-9b-preview branch. Production continues using its existing provider.
+This branch can route TECGPT chat requests to the owner's local Qwen3.5 9B model. It is enabled only when VERCEL_ENV is preview and both TECGPT_LOCAL_URL and TECGPT_LOCAL_BRIDGE_KEY are configured. Set these variables only for the tecgpt-local-9b-preview branch. Production continues using its existing provider.
 
 The local bridge accepts only authenticated POST /api/chat requests, validates message sizes, allows one active generation, and caps accepted requests per minute. Ollama, filesystem access, and the local setup page are not exposed through the tunnel. The bridge secret remains in a server-side environment variable and is never returned to the browser.
 

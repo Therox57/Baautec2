@@ -3,11 +3,11 @@ import assert from 'node:assert/strict';
 import {answerWithLocalPreview,isLocalPreviewConfigured} from '../server/localPreview.js';
 import {HttpError} from '../server/security.js';
 const messages=[{role:'user' as const,text:'TEC nədir?'}];
-const names=['VERCEL_ENV','TECGPT_LOCAL_URL','TECGPT_LOCAL_SECRET'];
+const names=['VERCEL_ENV','TECGPT_LOCAL_URL','TECGPT_LOCAL_BRIDGE_KEY'];
 test('local 9B adapter is preview-only, sends credentials server-side, and fails closed',async()=>{
  const previous=Object.fromEntries(names.map(n=>[n,process.env[n]]));
  try{
-  Object.assign(process.env,{VERCEL_ENV:'production',TECGPT_LOCAL_URL:'https://example.trycloudflare.com',TECGPT_LOCAL_SECRET:'test-only-secret'});
+  Object.assign(process.env,{VERCEL_ENV:'production',TECGPT_LOCAL_URL:'https://example.trycloudflare.com',TECGPT_LOCAL_BRIDGE_KEY:'test-only-secret'});
   assert.equal(isLocalPreviewConfigured(),false);
   await assert.rejects(()=>answerWithLocalPreview(messages),e=>e instanceof HttpError&&e.status===503);
   process.env.VERCEL_ENV='preview';assert.equal(isLocalPreviewConfigured(),true);

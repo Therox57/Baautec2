@@ -1,11 +1,11 @@
 /// <reference types="node" />
 import { HttpError, type ChatMessage } from './security.js';
 export function isLocalPreviewConfigured(): boolean {
- return process.env.VERCEL_ENV === 'preview' && !!process.env.TECGPT_LOCAL_URL && !!process.env.TECGPT_LOCAL_SECRET;
+ return process.env.VERCEL_ENV === 'preview' && !!process.env.TECGPT_LOCAL_URL && !!process.env.TECGPT_LOCAL_BRIDGE_KEY;
 }
 export async function answerWithLocalPreview(messages: ChatMessage[], fetchImpl: typeof fetch = fetch) {
  const endpoint = process.env.TECGPT_LOCAL_URL;
- const secret = process.env.TECGPT_LOCAL_SECRET;
+ const secret = process.env.TECGPT_LOCAL_BRIDGE_KEY;
  if (!isLocalPreviewConfigured() || !endpoint || !secret) throw new HttpError(503, 'Yerli TECGPT bağlantısı hazır deyil.');
  const url = new URL(endpoint);
  if (url.protocol !== 'https:' || !url.hostname.endsWith('.trycloudflare.com') || url.username || url.password || url.pathname !== '/' || url.search || url.hash) throw new HttpError(503, 'Yerli TECGPT bağlantısı düzgün qurulmayıb.');
