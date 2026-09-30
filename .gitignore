@@ -7,3 +7,9 @@ dist
 
 .test-build
 *.tsbuildinfo
+
+# Local AI credentials and large model files
+local-ai/preview-secret.json
+local-ai/*.env
+local-ai/models/
+local-ai/*.log

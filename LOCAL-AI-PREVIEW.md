@@ -9,3 +9,5 @@ The Windows runtime is C:/Users/user/tecgpt-local-runtime. Start preview-bridge.
 Local replies use verified BAAU/TEC source text, a draft and editorial review, plus conservative Azerbaijani corrections. Unknown facts and off-topic requests keep the requested standard replies. These safeguards reduce mistakes; they do not guarantee perfect language or factual accuracy.
 
 Checks: npm run test:security and npm run build. Targeted language/meaning checks and actual model responses are saved in the local runtime folder.
+
+The tested local AI source snapshot is versioned in local-ai/. It requires the existing Ollama qwen3.5:9b-best import; weights and Cloudflare executables remain local. Runtime source improvements include context-sensitive source selection, editorial review, and conservative language and response-length checks.
