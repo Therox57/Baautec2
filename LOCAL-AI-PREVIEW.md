@@ -11,3 +11,5 @@ Local replies use verified BAAU/TEC source text, a draft and editorial review, p
 Checks: npm run test:security and npm run build. Targeted language/meaning checks and actual model responses are saved in the local runtime folder.
 
 The tested local AI source snapshot is versioned in local-ai/. It requires the existing Ollama qwen3.5:9b-best import; weights and Cloudflare executables remain local. Runtime source improvements include context-sensitive source selection, editorial review, and conservative language and response-length checks.
+
+Owner-maintained persona.mjs records TEC's general social activity (owner confirmed 2026-10-01), separately from visitor claims. Joining/comparison advice presents TEC positively without inventing events or disparaging TGT. Identity questions use configured assistant metadata. Unknown institutional facts retain the source fallback.
