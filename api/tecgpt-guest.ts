@@ -1,3 +1,4 @@
+import {isLocalPreviewConfigured, answerWithLocalPreview} from '../server/localPreview.js';
 /// <reference types="node" />
 
 import {
@@ -37,7 +38,7 @@ export default async function handler(req: any, res: any) {
     // greeting/off-topic davranışını Redis olmadan da saxla.
     // Production-da GROQ_API_KEY olduqda bu blok işləmir və normal
     // söhbət aşağıda Groq-a gedir.
-    if (!isGroqConfigured()) {
+    if (!isGroqConfigured() && !isLocalPreviewConfigured()) {
       const localReply = getLocalReply(messages);
 
       if (localReply !== null) {
@@ -73,6 +74,16 @@ export default async function handler(req: any, res: any) {
 
     await enforceLimit("guest-burst", ip);
     await enforceLimit("guest-hour", ip);
+
+    if (isLocalPreviewConfigured()) {
+      await enforceLimit('provider-minute', 'local-9b');
+      const localAI = await answerWithLocalPreview(messages);
+      if (localAI.needsReview) {
+        try { await recordUnansweredQuestion(messages.at(-1)!.text); }
+        catch { console.warn('[TECGPT] Unanswered-question save unavailable'); }
+      }
+      return res.status(200).json(localAI);
+    }
 
     // Normal söhbətdə ilk seçim Groq-dur. Model son mesajın
     // mənasını söhbət kontekstindən özü anlayır; phrase -> answer

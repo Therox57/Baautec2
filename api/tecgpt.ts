@@ -1,3 +1,4 @@
+import {isLocalPreviewConfigured, answerWithLocalPreview} from '../server/localPreview.js';
 /// <reference types="node" />
 
 import {
@@ -143,6 +144,16 @@ export default async function handler(req: any, res: any) {
       "user-hour",
       user.id
     );
+
+    if (isLocalPreviewConfigured()) {
+      await enforceLimit('provider-minute', 'local-9b');
+      const localAI = await answerWithLocalPreview(messages);
+      if (localAI.needsReview) {
+        try { await recordUnansweredQuestion(messages.at(-1)!.text); }
+        catch { console.warn('[TECGPT] Unanswered-question save unavailable'); }
+      }
+      return res.status(200).json(localAI);
+    }
 
     if (isGroqConfigured()) {
       try {
