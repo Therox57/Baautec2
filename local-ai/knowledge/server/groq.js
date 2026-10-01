@@ -470,7 +470,7 @@ export async function answerConversationWithGroq(messages, dependencies = {}) {
         }
         const reply = rawReply.trim();
         const reason = !reply ? 'empty' : reply.length > 3200 ? 'too_long'
-            : containsUnknownUrl(reply, [fullKnowledgeUrls(), verifiedKnowledge].join("\n")) ? 'unknown_url'
+            : containsUnknownUrl(reply, verifiedKnowledge) ? 'unknown_url'
                 : leaksInternalData(reply) ? 'internal_data'
                     : containsUnsupportedDetail(reply, verifiedKnowledge) ? 'unsupported_detail' : null;
         if (reason) {

@@ -18,3 +18,8 @@ test('client fails visibly for empty, malformed, full queue and cancelled reques
  for(const response of [Response.json({reply:''}),new Response('not JSON'),Response.json({pending:true,jobId:'bad',state:'running'},{status:202}),Response.json({error:'Növbə doludur.'},{status:429})])await assert.rejects(()=>requestChat('/api/tecgpt-guest',messages,{},()=>{},async()=>response,async()=>{}));
  const c=new AbortController();c.abort();let called=false;await assert.rejects(()=>requestChat('/api/tecgpt-guest',messages,{},()=>{},async()=>{called=true;return Response.json({reply:'x'})},async()=>{},c.signal));assert.equal(called,false);
 });
+test('cancelling a live client request aborts transport without creating retries',async()=>{
+ const controller=new AbortController();let calls=0;
+ const fake:typeof fetch=async(_url,init)=>{calls++;setTimeout(()=>controller.abort(),2);return new Promise((_,reject)=>init?.signal?.addEventListener('abort',()=>reject(new DOMException('cancel','AbortError')),{once:true}));};
+ await assert.rejects(()=>requestChat('/api/tecgpt-guest',messages,{},()=>{},fake,async()=>{},controller.signal));assert.equal(calls,1);
+});
