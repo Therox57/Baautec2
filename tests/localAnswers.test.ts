@@ -174,6 +174,6 @@ test('admin TECGPT girişsiz yerli cavab vermir', async () => {
   assert.equal(statusCode, 401);
   assert.equal(
     response.error,
-    'TECGPT girişi tələb olunur.'
+    'Giriş tələb olunur.'
   );
 });

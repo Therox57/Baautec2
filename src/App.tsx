@@ -9,7 +9,7 @@ import {
   ShieldCheck,
   X,
 } from 'lucide-react'
-import { supabase } from './supabase'
+import { portal as supabase, registerMember } from './portalClient'
 import { csvCell } from './csv'
 import { TecGPTGuestPage } from './TecGPTGuestPage'
 import ReactMarkdown from 'react-markdown'
@@ -177,7 +177,7 @@ function MembershipPage() {
     setSubmitting(true)
     try {
       const languages = selectedLangs.map(l => ({ language: l === 'Digər' ? otherLang.trim() : l, level: langLevels[l] ?? '' }))
-      const { error } = await supabase.from('tec_members').insert({
+      const { error } = await registerMember({
         first_name:firstName.trim(), last_name:lastName.trim(), father_name:fatherName.trim(),
         birth_date:`${year}-${month.padStart(2,'0')}-${day.padStart(2,'0')}`, gender,
         phone:formatPhone(phoneDigits), email:email.trim().toLowerCase(), faculty:faculty.trim(), specialty:specialty.trim(), course,
@@ -288,7 +288,7 @@ function TecGPTBetaPage(){
       setUserEmail(user.email??null)
       setUserId(user.id)
       setCanUseTecGPT(
-        roles?.some(({role})=>role==='admin'||role==='tester')??false
+        roles?.some(({role}:{role:string})=>role==='admin'||role==='tester')??false
       )
       setChecking(false)
     }
@@ -388,7 +388,7 @@ function TecGPTBeta({email,userId}:{email:string;userId:string}){
       return
     }
 
-    const loaded:TecGPTMessage[]=(data??[]).map(row=>({
+    const loaded:TecGPTMessage[]=(data??[]).map((row:any)=>({
       id:String(row.id),
       role:row.role==='user'?'user':'assistant',
       text:String(row.content??''),
@@ -538,11 +538,11 @@ function TecGPTBeta({email,userId}:{email:string;userId:string}){
         data:{session},
       }=await supabase.auth.getSession()
 
-      if(!session?.access_token){
+      if(!session){
         throw new Error('Admin sessiyası tapılmadı.')
       }
 
-      const data=await requestChat('/api/tecgpt',outgoingMessages.slice(-12).map(({role,text})=>({role,text})),{Authorization:`Bearer ${session.access_token}`},setProgress,fetch,undefined,requestController.current?.signal)
+      const data=await requestChat('/api/tecgpt',outgoingMessages.slice(-12).map(({role,text})=>({role,text})),{},setProgress,fetch,undefined,requestController.current?.signal)
       const reply=data.reply
 
       await saveMessage(chatId,'assistant',reply)
@@ -787,7 +787,7 @@ function AdminPage() {
 
 function AdminLogin(){
   const [email,setEmail]=useState(''); const [password,setPassword]=useState(''); const [loading,setLoading]=useState(false); const [error,setError]=useState('')
-  async function submit(e:FormEvent){e.preventDefault(); if(loading)return; setError('');setLoading(true); const {error:err}=await supabase.auth.signInWithPassword({email:email.trim(),password}); setLoading(false); if(err)setError('E-poçt və ya şifrə yanlışdır.')}
+  async function submit(e:FormEvent){e.preventDefault(); if(loading)return; setError('');setLoading(true); const {error:err}=await supabase.auth.signInWithPassword({email:email.trim(),password}); setLoading(false); if(err)setError(err.message)}
   return <main className="center-page"><div className="card login-card"><div className="login-head"><ShieldCheck/><h1>TEC İdarəetmə Paneli</h1><p>Yalnız səlahiyyətli administratorlar üçün.</p></div><form onSubmit={submit} className="form-stack compact"><Field label="E-poçt"><input className="control" type="email" value={email} onChange={e=>setEmail(e.target.value)} autoComplete="username"/></Field><Field label="Şifrə"><input className="control" type="password" value={password} onChange={e=>setPassword(e.target.value)} autoComplete="current-password"/></Field>{error?<p className="field-error">{error}</p>:null}<button className="primary-btn" disabled={loading}>{loading?<Loader2 className="spin" size={20}/>:null}Daxil ol</button></form></div></main>
 }
 
@@ -807,9 +807,9 @@ function UnansweredQuestionsCard(){
   async function load(){
     setLoading(true);setError('');setNotice('')
     try{
-      const {data}=await supabase.auth.getSession();const token=data.session?.access_token
-      if(!token)throw new Error('Admin sessiyası tapılmadı. Yenidən daxil ol.')
-      const response=await fetch('/api/admin/tecgpt-questions?status='+status,{headers:{Authorization:'Bearer '+token},cache:'no-store'})
+      const {data}=await supabase.auth.getSession();const session=data.session
+      if(!session)throw new Error('Admin sessiyası tapılmadı. Yenidən daxil ol.')
+      const response=await fetch('/api/admin/tecgpt-questions?status='+status,{credentials:'same-origin',cache:'no-store'})
       const result=await response.json().catch(()=>({})) as {questions?:QueueItem[];error?:string}
       if(!response.ok)throw new Error(result.error||'Suallar yüklənmədi.')
       const list=result.questions??[];setItems(list)
@@ -821,10 +821,10 @@ function UnansweredQuestionsCard(){
   async function update(item:QueueItem,nextStatus:'approved'|'dismissed'){
     setSaving(item.id);setError('');setNotice('')
     try{
-      const {data}=await supabase.auth.getSession();const token=data.session?.access_token
-      if(!token)throw new Error('Admin sessiyası tapılmadı. Yenidən daxil ol.')
+      const {data}=await supabase.auth.getSession();const session=data.session
+      if(!session)throw new Error('Admin sessiyası tapılmadı. Yenidən daxil ol.')
       const payload={id:item.id,status:nextStatus,answer:answers[item.id]??'',sourceUrl:sources[item.id]??''}
-      const response=await fetch('/api/admin/tecgpt-questions',{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify(payload)})
+      const response=await fetch('/api/admin/tecgpt-questions',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
       const result=await response.json().catch(()=>({})) as {error?:string}
       if(!response.ok)throw new Error(result.error||'Dəyişiklik yadda saxlanmadı.')
       setNotice(nextStatus==='approved'?'Cavab təsdiqləndi və botun yoxlanmış məlumatlarına əlavə olundu.':'Sual arxivləndi.')
@@ -859,13 +859,13 @@ function AddAdminCard(){
     setMessage("")
     setError("")
     if(!cleanEmail){setError("E-poçt daxil et.");return}
-    if(password.length<8){setError("Şifrə ən azı 8 simvol olmalıdır.");return}
+    if(password.length<12){setError("Şifrə ən azı 12 simvol olmalıdır.");return}
     setLoading(true)
     try{
       const {data}=await supabase.auth.getSession()
-      const token=data.session?.access_token
-      if(!token) throw new Error("Admin sessiyası tapılmadı. Yenidən daxil ol.")
-      const res=await fetch("https://tec-qeydiyyat-portal.lovable.app/api/public/create-admin",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({email:cleanEmail,password})})
+      const session=data.session
+      if(!session) throw new Error("Admin sessiyası tapılmadı. Yenidən daxil ol.")
+      const res=await fetch("/api/admin/create-admin",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:cleanEmail,password})})
       const result=await res.json().catch(()=>({})) as {success?:boolean;message?:string;error?:string}
       if(!res.ok||!result.success) throw new Error(result.error||"Admin hesabı yaradıla bilmədi.")
       setMessage(result.message||"Yeni admin uğurla yaradıldı.")
@@ -909,7 +909,7 @@ function AddAdminCard(){
             type="password"
             value={password}
             onChange={e=>setPassword(e.target.value)}
-            placeholder="Minimum 8 simvol"
+            placeholder="Minimum 12 simvol"
             autoComplete="new-password"
             required
           />

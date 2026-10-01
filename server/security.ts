@@ -53,8 +53,13 @@ export function clientIp(req: RequestLike): string {
   const value = typeof forwarded === 'string' ? forwarded.split(',')[0].trim() : req.socket?.remoteAddress;
   return value && isIP(value) ? value : 'unknown';
 }
-type Bucket = 'local-poll' | 'guest-burst' | 'guest-hour' | 'guest-day' | 'auth-ip' | 'user-minute' | 'user-hour' | 'auth-day' | 'provider-minute' | 'provider-day';
-const configs: Record<Bucket, { limit: number; window: '1 m' | '1 h' | '1 d'; prefix: string }> = {
+type Bucket = 'login-ip' | 'login-account' | 'register-ip' | 'register-global' | 'portal-user' | 'local-poll' | 'guest-burst' | 'guest-hour' | 'guest-day' | 'auth-ip' | 'user-minute' | 'user-hour' | 'auth-day' | 'provider-minute' | 'provider-day';
+const configs: Record<Bucket, { limit: number; window: '1 m' | '15 m' | '1 h' | '1 d'; prefix: string }> = {
+  'login-ip': {limit:8,window:'15 m',prefix:'portal:login:ip'},
+  'login-account': {limit:5,window:'15 m',prefix:'portal:login:account'},
+  'register-ip': {limit:5,window:'1 h',prefix:'portal:register:ip'},
+  'register-global': {limit:200,window:'1 h',prefix:'portal:register:global'},
+  'portal-user': {limit:60,window:'1 m',prefix:'portal:user'},
   // Free Groq has tighter token/minute limits than request/minute limits.
   // Keep headroom and fall back locally instead of surfacing provider 429s.
   'local-poll': { limit: 60, window: '1 m', prefix: 'tecgpt:local:poll' },

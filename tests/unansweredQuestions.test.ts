@@ -18,10 +18,8 @@ test('question queue refuses requests without a signed-in administrator',async()
   finally{globalThis.fetch=original;}
 });
 
-test('tester role cannot read administrator question queue',async()=>{
-  const originalFetch=globalThis.fetch;const oldUrl=process.env.SUPABASE_URL;const oldKey=process.env.SUPABASE_PUBLISHABLE_KEY;
-  process.env.SUPABASE_URL='https://example.supabase.co';process.env.SUPABASE_PUBLISHABLE_KEY='test-key';let calls=0;
-  globalThis.fetch=(async()=>{calls++;return calls===1?Response.json({id:'user-1'}):Response.json([{role:'tester'}]);}) as typeof fetch;
-  try{const out=response();await questions({method:'GET',headers:{authorization:'Bearer signed-session'},query:{status:'pending'}},out.res);assert.equal(out.status,403);assert.equal(calls,2);}
-  finally{globalThis.fetch=originalFetch;if(oldUrl===undefined)delete process.env.SUPABASE_URL;else process.env.SUPABASE_URL=oldUrl;if(oldKey===undefined)delete process.env.SUPABASE_PUBLISHABLE_KEY;else process.env.SUPABASE_PUBLISHABLE_KEY=oldKey;}
+test('tester role cannot satisfy an administrator role check',async()=>{
+ const {requireRole}=await import('../server/portalSecurity.js');const original=globalThis.fetch;const oldUrl=process.env.SUPABASE_URL,oldKey=process.env.SUPABASE_PUBLISHABLE_KEY;process.env.SUPABASE_URL='https://example.supabase.co';process.env.SUPABASE_PUBLISHABLE_KEY='test-key';
+ globalThis.fetch=async()=>Response.json([{role:'tester'}]);
+ try{await assert.rejects(()=>requireRole({accessToken:'signed-session',user:{id:'user-1',email:'test@example.com'},expiresAt:Date.now()+600000},['admin']),(e:any)=>e.status===403);}finally{globalThis.fetch=original;if(oldUrl===undefined)delete process.env.SUPABASE_URL;else process.env.SUPABASE_URL=oldUrl;if(oldKey===undefined)delete process.env.SUPABASE_PUBLISHABLE_KEY;else process.env.SUPABASE_PUBLISHABLE_KEY=oldKey;}
 });

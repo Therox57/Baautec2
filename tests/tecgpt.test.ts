@@ -138,7 +138,7 @@ test('guest rejects off-topic and admin requires login before network calls', as
     );
     assert.equal(
       authResponse.result.error,
-      'TECGPT girişi tələb olunur.'
+      'Giriş tələb olunur.'
     );
   } finally {
     globalThis.fetch = original;

@@ -1,3 +1,4 @@
+import {sessionAuthorization,assertSameOrigin} from '../server/portalSecurity.js';
 import {isLocalPreviewConfigured, answerWithLocalPreview, localJobId, localRequestKey} from '../server/localPreview.js';
 /// <reference types="node" />
 
@@ -34,24 +35,8 @@ export default async function handler(req: any, res: any) {
   try {
     const messages = validateChatRequest(req);
 
-    const authHeader = String(
-      req.headers.authorization || ""
-    );
-
-    if (!authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({
-        error: "TECGPT girişi tələb olunur.",
-      });
-    }
-
-    if (
-      authHeader.length > 8192 ||
-      !authHeader.slice(7).trim()
-    ) {
-      return res.status(401).json({
-        error: "Sessiya etibarsızdır.",
-      });
-    }
+    const authHeader = await sessionAuthorization(req);
+    assertSameOrigin(req);
 
     const supabaseUrl =
       process.env.SUPABASE_URL ||

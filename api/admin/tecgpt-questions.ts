@@ -1,3 +1,5 @@
+import {sessionAuthorization,assertSameOrigin,jsonBody} from '../../server/portalSecurity.js';
+import {enforceLimit,clientIp,sendSecurityError} from '../../server/security.js';
 import type { UnansweredStatus } from '../../server/unansweredQuestions.js';
 import { listUnansweredQuestions, updateUnansweredQuestion } from '../../server/unansweredQuestions.js';
 
@@ -11,7 +13,8 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
   try {
-    const auth = String(req.headers.authorization || '');
+    if(req.method==='PATCH')assertSameOrigin(req);
+    const auth = await sessionAuthorization(req);
     if (!auth.startsWith('Bearer ') || auth.length > 8192) return res.status(401).json({ error: 'Admin girişi tələb olunur.' });
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -26,13 +29,14 @@ export default async function handler(req: any, res: any) {
     if (!roleResponse.ok || !Array.isArray(roles) || !roles.some((role: any) => role?.role === 'admin')) {
       return res.status(403).json({ error: 'Bu bölmə yalnız administratorlar üçündür.' });
     }
+    await enforceLimit('portal-user',user.id);
     if (req.method === 'GET') {
       const status = String(req.query?.status || 'pending') as UnansweredStatus;
       if (!['pending', 'approved', 'dismissed'].includes(status)) return res.status(400).json({ error: 'Status yanlışdır.' });
       return res.status(200).json({ questions: await listUnansweredQuestions(status) });
     }
     let body: any;
-    try { body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body; }
+    try { body = jsonBody(req,8192); }
     catch { return res.status(400).json({ error: 'Sorğu məlumatları düzgün deyil.' }); }
     if (!body || typeof body.id !== 'string' || body.id.length > 80 || !['approved', 'dismissed'].includes(body.status)) {
       return res.status(400).json({ error: 'Sorğu məlumatları yanlışdır.' });
@@ -44,7 +48,7 @@ export default async function handler(req: any, res: any) {
       }
       let source: URL;
       try { source = new URL(body.sourceUrl); } catch { return res.status(400).json({ error: 'Mənbə linki düzgün deyil.' }); }
-      if (source.protocol !== 'https:' || !allowedHosts.has(source.hostname) || source.username || source.password || ((source.hostname === 'instagram.com' || source.hostname === 'www.instagram.com') && !source.pathname.startsWith('/baau__tec'))) {
+      if (source.protocol !== 'https:' || !allowedHosts.has(source.hostname) || source.username || source.password || ((source.hostname === 'instagram.com' || source.hostname === 'www.instagram.com') && !/^\/baau__tec(?:\/|$)/.test(source.pathname))) {
         return res.status(400).json({ error: 'Yalnız BAAU və TEC-in rəsmi HTTPS səhifələri qəbul edilir.' });
       }
       patch = { status: 'approved', answer: body.answer.trim(), sourceUrl: source.href };
@@ -52,6 +56,7 @@ export default async function handler(req: any, res: any) {
     const item = await updateUnansweredQuestion(body.id, patch);
     return item ? res.status(200).json({ question: item }) : res.status(404).json({ error: 'Sual tapılmadı.' });
   } catch (error) {
+    if(sendSecurityError(error,res))return;
     console.error('[TECGPT admin questions]', error instanceof Error ? error.name : 'UnknownError');
     return res.status(500).json({ error: 'Cavabsız suallar hazırda yüklənə bilmir.' });
   }
