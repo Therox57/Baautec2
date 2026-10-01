@@ -21,3 +21,13 @@ The local path has no greeting/identity phrase-to-answer routing, student-life c
 Run deterministic response-contract checks with node --test local-ai/tests/contract.test.mjs. Run live varied-intent checks with node local-ai/tests/semantic-general.mjs; it needs the existing local Ollama model and writes its generated corpus and results to the temporary tecgpt-general-qa directory. Set TECGPT_TEST_SEED to reproduce a run. These checks exercise varied wording, context, negation, writing, planning, known and missing facts, topic switches and injection; they cannot prove correctness for all possible messages.
 
 The Windows runtime contains semantic-general-results.json, semantic-planner-results.json, semantic-final-results.json and semantic-latest-results.json from successive investigation versions. The first complete broad run passed 16/18 coarse checks, but manual review found additional formatting, grounding and meaning problems. Subsequent changes address scope/type contradictions, clarification/unknown confusion and identity metadata. These earlier artifacts are not proof that the current model is error-free.
+
+## 1 October 2026 availability fix
+
+The protected bridge now accepts a job immediately (HTTP 202), queues up to three jobs, and runs one GPU generation at a time. Browser polls every three seconds through the same Vercel API, receiving queued/running progress. Polls use a separate 60/minute limit, never the six new generations/minute quota. Job IDs are random 256-bit capabilities bound to the original message payload; request retry keys are scoped by user/IP and deduplicate inference. Model credentials remain server-only.
+
+A generation has a 90-second deadline shared across understanding, generation, review and repair. Jobs abandoned for 45 seconds are cancelled. Completed/failed jobs expire after five minutes, and message bodies are cleared when finished. The client waits at most five minutes, retries transport failures twice using the same request key, and the guest UI can retry a failed message without adding another user bubble.
+
+This fixes immediate rejection of a second concurrent message, not model reasoning limitations. Queue capacity, genuine quotas, unavailable PC/tunnel and failed quality checks can still produce visible errors. The local demo and direct Ollama clients are separate consumers; keep those idle while serving the preview to avoid GPU contention.
+
+Run `node --test local-ai/tests/queue.test.mjs local-ai/tests/contract.test.mjs` and `npm run test:security`. Real model evidence is in the runtime's availability-live-results.json; test counts are reported only after completion.

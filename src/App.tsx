@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
+import {requestChat} from './tecgptRequest'
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import {
   CheckCircle2,
   Download,
@@ -323,6 +324,10 @@ function TecGPTBeta({email,userId}:{email:string;userId:string}){
   const [messages,setMessages]=useState<TecGPTMessage[]>([makeWelcome()])
   const [input,setInput]=useState('')
   const [typing,setTyping]=useState(false)
+  const [progress,setProgress]=useState('')
+  const inFlight=useRef(false)
+  const requestController=useRef<AbortController|null>(null)
+  useEffect(()=>()=>requestController.current?.abort(),[])
   const [loadingHistory,setLoadingHistory]=useState(true)
 
   const quick=[
@@ -503,7 +508,10 @@ function TecGPTBeta({email,userId}:{email:string;userId:string}){
   async function send(text?:string){
     const value=(text??input).trim()
 
-    if(!value||typing)return
+    if(!value||inFlight.current)return
+    inFlight.current=true
+    requestController.current=new AbortController()
+    setProgress('Cavab hazırlanır...')
 
     const userMessage:TecGPTMessage={
       id:`local-user-${Date.now()}`,
@@ -534,40 +542,8 @@ function TecGPTBeta({email,userId}:{email:string;userId:string}){
         throw new Error('Admin sessiyası tapılmadı.')
       }
 
-      const response=await fetch('/api/tecgpt',{
-        method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          Authorization:`Bearer ${session.access_token}`,
-        },
-        body:JSON.stringify({
-          messages:outgoingMessages
-            .slice(-12)
-            .map(message=>({
-              role:message.role,
-              text:message.text,
-            })),
-        }),
-      })
-
-      const raw=await response.text()
-
-      let data:{reply?:string;error?:string}={}
-      try{
-        data=raw?JSON.parse(raw):{}
-      }catch{
-        data={error:raw||'Server cavabı oxuna bilmədi.'}
-      }
-
-      if(!response.ok){
-        throw new Error(data.error||'TECGPT cavab verə bilmədi.')
-      }
-
-      const reply=(data.reply??'').trim()
-
-      if(!reply){
-        throw new Error('TECGPT boş cavab qaytardı.')
-      }
+      const data=await requestChat('/api/tecgpt',outgoingMessages.slice(-12).map(({role,text})=>({role,text})),{Authorization:`Bearer ${session.access_token}`},setProgress,fetch,undefined,requestController.current?.signal)
+      const reply=data.reply
 
       await saveMessage(chatId,'assistant',reply)
 
@@ -594,6 +570,7 @@ function TecGPTBeta({email,userId}:{email:string;userId:string}){
         },
       ])
     }finally{
+      inFlight.current=false
       setTyping(false)
     }
   }
@@ -725,8 +702,8 @@ function TecGPTBeta({email,userId}:{email:string;userId:string}){
             ? (
               <div className="tecgpt-message assistant">
                 <div className="tecgpt-avatar">T</div>
-                <div className="tecgpt-bubble tecgpt-typing">
-                  <i/><i/><i/>
+                <div className="tecgpt-bubble tecgpt-typing" role="status" aria-live="polite">
+                  {progress}
                 </div>
               </div>
             )

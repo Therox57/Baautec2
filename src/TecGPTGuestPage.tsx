@@ -1,4 +1,5 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import {requestChat, type ClientMessage} from './tecgptRequest'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import {
@@ -24,6 +25,10 @@ export function TecGPTGuestPage() {
   const [input, setInput] = useState('')
   const [notice, setNotice] = useState('')
   const [typing, setTyping] = useState(false)
+  const [failed, setFailed] = useState<{chatId:string;messages:ClientMessage[]}|null>(null)
+  const inFlight=useRef(false)
+  const controller=useRef<AbortController|null>(null)
+  useEffect(()=>()=>controller.current?.abort(),[])
 
   useEffect(() => {
     try {
@@ -44,12 +49,14 @@ export function TecGPTGuestPage() {
     setActiveId(null)
     setInput('')
     setNotice('')
+    setFailed(null)
   }
 
   function openChat(id: string) {
     setActiveId(id)
     setInput('')
     setNotice('')
+    setFailed(null)
   }
 
   function deleteChat(id: string) {
@@ -63,13 +70,15 @@ export function TecGPTGuestPage() {
     }
 
     setNotice('')
+    setFailed(null)
   }
 
   async function send(event?: FormEvent) {
     event?.preventDefault()
 
     const value = input.trim()
-    if (!value || typing) return
+    if (!value || inFlight.current) return
+    inFlight.current=true
 
     const now = new Date().toISOString()
     const chatId = activeId ?? crypto.randomUUID()
@@ -115,32 +124,18 @@ export function TecGPTGuestPage() {
     setActiveId(chatId)
     setInput('')
     setNotice('')
+    await deliver(chatId,outgoing.slice(-12).map(({role,text})=>({role,text})))
+  }
+
+  async function deliver(chatId:string,messages:ClientMessage[]) {
+    inFlight.current=true
     setTyping(true)
-
+    setFailed(null)
+    controller.current=new AbortController()
     try {
-      const response = await fetch('/api/tecgpt-guest', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messages: outgoing.slice(-12).map(message => ({
-            role: message.role,
-            text: message.text,
-          })),
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'TECGPT cavab verə bilmədi.')
-      }
-
-      if (data.degraded) setNotice('Hazırda sadə məlumat rejimindəyəm; sərbəst söhbət müvəqqəti əlçatan deyil.')
-
-      const reply = String(data.reply ?? '').trim()
-      if (!reply) throw new Error('TECGPT boş cavab qaytardı.')
+      const data=await requestChat('/api/tecgpt-guest',messages,{},setNotice,fetch,undefined,controller.current.signal)
+      setNotice(data.degraded?'Hazırda sadə məlumat rejimindəyəm; sərbəst söhbət müvəqqəti əlçatan deyil.':'')
+      const reply=data.reply
 
       const assistantMessage: GuestMessage = {
         id: crypto.randomUUID(),
@@ -158,12 +153,15 @@ export function TecGPTGuestPage() {
           : chat
       ))
     } catch (error) {
+      if(controller.current?.signal.aborted)return
+      setFailed({chatId,messages})
       setNotice(
         error instanceof Error
           ? error.message
           : 'TECGPT-də xəta baş verdi.'
       )
     } finally {
+      inFlight.current=false
       setTyping(false)
     }
   }
@@ -179,7 +177,7 @@ export function TecGPTGuestPage() {
           </div>
         </div>
 
-        <button className="tecgpt-new" onClick={newChat}>
+        <button className="tecgpt-new" disabled={typing} onClick={newChat}>
           ＋ Yeni söhbət
         </button>
 
@@ -207,6 +205,7 @@ export function TecGPTGuestPage() {
               >
                 <button
                   className="tecgpt-history-open"
+                  disabled={typing}
                   onClick={() => openChat(chat.id)}
                   title={chat.title}
                 >
@@ -215,6 +214,7 @@ export function TecGPTGuestPage() {
 
                 <button
                   className="tecgpt-history-delete"
+                  disabled={typing}
                   onClick={() => deleteChat(chat.id)}
                   aria-label="Söhbəti sil"
                   title="Söhbəti sil"
@@ -242,6 +242,7 @@ export function TecGPTGuestPage() {
           <div className="tecgpt-top-actions">
             <select
               className="tecgpt-mobile-history"
+              disabled={typing}
               value={activeId ?? ''}
               onChange={event => {
                 const id = event.target.value
@@ -291,7 +292,8 @@ export function TecGPTGuestPage() {
           </div>
 
           <div className="tecgpt-compose-wrap">
-            {notice ? <p role="status">{notice}</p> : null}
+            {notice ? <p role="status" aria-live="polite">{notice}</p> : null}
+            {failed?.chatId===activeId&&!typing ? <button className="tecgpt-new" onClick={()=>{if(!inFlight.current)void deliver(failed.chatId,failed.messages)}}>Mesajı yenidən sına</button> : null}
 
             <form className="tecgpt-compose" onSubmit={send}>
               <textarea
@@ -307,6 +309,7 @@ export function TecGPTGuestPage() {
                     send()
                   }
                 }}
+                maxLength={4000}
                 placeholder="Mesaj yaz..."
                 rows={1}
               />

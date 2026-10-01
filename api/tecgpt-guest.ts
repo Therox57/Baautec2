@@ -1,4 +1,4 @@
-import {isLocalPreviewConfigured, answerWithLocalPreview} from '../server/localPreview.js';
+import {isLocalPreviewConfigured, answerWithLocalPreview, localJobId, localRequestKey} from '../server/localPreview.js';
 /// <reference types="node" />
 
 import {
@@ -72,12 +72,17 @@ export default async function handler(req: any, res: any) {
 
     const ip = clientIp(req);
 
+    const jobId=isLocalPreviewConfigured()?localJobId(req):undefined;
+    if(jobId)await enforceLimit('local-poll',ip);
+    else {
     await enforceLimit("guest-burst", ip);
     await enforceLimit("guest-hour", ip);
+    }
 
     if (isLocalPreviewConfigured()) {
-      await enforceLimit('provider-minute', 'local-9b');
-      const localAI = await answerWithLocalPreview(messages);
+      if(!jobId)await enforceLimit('provider-minute', 'local-9b');
+      const localAI = await answerWithLocalPreview(messages,fetch,jobId,jobId?undefined:localRequestKey(req,'guest:'+ip));
+      if('pending' in localAI)return res.status(202).json(localAI);
       if (localAI.needsReview) {
         try { await recordUnansweredQuestion(messages.at(-1)!.text); }
         catch { console.warn('[TECGPT] Unanswered-question save unavailable'); }
@@ -179,3 +184,4 @@ export default async function handler(req: any, res: any) {
     });
   }
 }
+

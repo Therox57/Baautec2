@@ -13,6 +13,7 @@
     "api/**/*.ts",
     "server/**/*.ts",
     "tests/**/*.ts",
-    "src/csv.ts"
+    "src/csv.ts",
+    "src/tecgptRequest.ts"
   ]
 }

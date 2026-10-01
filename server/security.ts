@@ -53,10 +53,11 @@ export function clientIp(req: RequestLike): string {
   const value = typeof forwarded === 'string' ? forwarded.split(',')[0].trim() : req.socket?.remoteAddress;
   return value && isIP(value) ? value : 'unknown';
 }
-type Bucket = 'guest-burst' | 'guest-hour' | 'guest-day' | 'auth-ip' | 'user-minute' | 'user-hour' | 'auth-day' | 'provider-minute' | 'provider-day';
+type Bucket = 'local-poll' | 'guest-burst' | 'guest-hour' | 'guest-day' | 'auth-ip' | 'user-minute' | 'user-hour' | 'auth-day' | 'provider-minute' | 'provider-day';
 const configs: Record<Bucket, { limit: number; window: '1 m' | '1 h' | '1 d'; prefix: string }> = {
   // Free Groq has tighter token/minute limits than request/minute limits.
   // Keep headroom and fall back locally instead of surfacing provider 429s.
+  'local-poll': { limit: 60, window: '1 m', prefix: 'tecgpt:local:poll' },
   'provider-minute': { limit: 6, window: '1 m', prefix: 'tecgpt:provider:minute' },
   'provider-day': { limit: 900, window: '1 d', prefix: 'tecgpt:provider:daily-attempts' },
   'guest-burst': { limit: 10, window: '1 m', prefix: 'tecgpt:guest:minute' },
@@ -96,3 +97,4 @@ export function sendSecurityError(error: unknown, res: any): boolean {
   res.status(error.status).json({ error: error.message });
   return true;
 }
+

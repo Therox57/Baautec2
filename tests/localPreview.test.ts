@@ -12,7 +12,7 @@ test('local 9B adapter is preview-only, sends credentials server-side, and fails
   await assert.rejects(()=>answerWithLocalPreview(messages),e=>e instanceof HttpError&&e.status===503);
   process.env.VERCEL_ENV='preview';assert.equal(isLocalPreviewConfigured(),true);
   const fake:typeof fetch=async(url,init)=>{assert.equal(String(url),'https://example.trycloudflare.com/api/chat');assert.equal((init?.headers as Record<string,string>).Authorization,'Bearer test-only-secret');assert.equal(init?.redirect,'error');assert.deepEqual(JSON.parse(init?.body as string),{messages});return Response.json({reply:'TEC tələbələrin elmi fəaliyyətinə yönəlir.',model:'qwen3.5:9b-best',provider:'local-9b',needsReview:false,rejected:false});};
-  assert.equal((await answerWithLocalPreview(messages,fake)).provider,'local-9b');
+  const answer=await answerWithLocalPreview(messages,fake);assert.ok('provider' in answer);assert.equal(answer.provider,'local-9b');
   process.env.TECGPT_LOCAL_URL='https://example.com';let called=false;
   await assert.rejects(()=>answerWithLocalPreview(messages,async()=>{called=true;throw Error();}),e=>e instanceof HttpError&&e.status===503);assert.equal(called,false);
   process.env.TECGPT_LOCAL_URL='https://example.trycloudflare.com';
