@@ -13,3 +13,5 @@ local-ai/preview-secret.json
 local-ai/*.env
 local-ai/models/
 local-ai/*.log
+
+supabase/.temp/
