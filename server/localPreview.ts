@@ -2,7 +2,7 @@
 import {createHash,randomUUID} from 'node:crypto';
 import { HttpError, type ChatMessage } from './security.js';
 export function isLocalPreviewConfigured(): boolean {
- return process.env.VERCEL_ENV === 'preview' && !!process.env.TECGPT_LOCAL_URL && !!process.env.TECGPT_LOCAL_BRIDGE_KEY;
+ return ['preview','production'].includes(process.env.VERCEL_ENV || '') && !!process.env.TECGPT_LOCAL_URL && !!process.env.TECGPT_LOCAL_BRIDGE_KEY;
 }
 export function localJobId(req: {body?: unknown}): string | undefined {
  let body=req.body;
@@ -27,7 +27,7 @@ export async function answerWithLocalPreview(messages: ChatMessage[], fetchImpl:
  if (url.protocol !== 'https:' || !url.hostname.endsWith('.trycloudflare.com') || url.username || url.password || url.pathname !== '/' || url.search || url.hash) throw new HttpError(503, 'Yerli TECGPT bağlantısı düzgün qurulmayıb.');
  let response: Response;
  try { response = await fetchImpl(new URL('/api/chat', url), {method:'POST', redirect:'error', headers:{'Content-Type':'application/json',Authorization:'Bearer '+secret},signal:AbortSignal.timeout(15000),body:JSON.stringify({messages,...(jobId?{jobId}:{}),...(requestId?{requestId}:{})})}); }
- catch { throw new HttpError(503, 'Kompüterdəki TECGPT-yə çatmaq mümkün olmadı. Kompüter və preview bağlantısı açıq olmalıdır.'); }
+ catch { throw new HttpError(503, 'Kompüterdəki TECGPT-yə çatmaq mümkün olmadı. Kompüter və qorunan bağlantı açıq olmalıdır.'); }
  if (response.status === 429) {
   const data=await response.json().catch(()=>({})) as {reason?:string};
   throw new HttpError(429,data.reason==='quota'?'Yerli modelin sorğu limitinə çatılıb. Bir qədər sonra yenidən sına.':'Növbə doludur. Bir qədər sonra yenidən sına.',Math.min(60,Math.max(1,Number(response.headers.get('Retry-After'))||15)));
