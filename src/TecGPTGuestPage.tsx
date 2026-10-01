@@ -26,13 +26,15 @@ export function TecGPTGuestPage() {
   const [notice, setNotice] = useState('')
   const [typing, setTyping] = useState(false)
   const [failed, setFailed] = useState<{chatId:string;messages:ClientMessage[]}|null>(null)
+  const savedChats=useRef(chats)
   const inFlight=useRef(false)
   const controller=useRef<AbortController|null>(null)
   useEffect(()=>()=>controller.current?.abort(),[])
 
   useEffect(() => {
     try {
-      saveGuestChats(chats)
+      saveGuestChats(chats,savedChats.current)
+      savedChats.current=chats
     } catch {
       setNotice('Brauzerin yaddaşı doludur. Tarixçə saxlanılmaya bilər.')
     }
@@ -131,6 +133,7 @@ export function TecGPTGuestPage() {
     inFlight.current=true
     setTyping(true)
     setFailed(null)
+    setNotice('Cavab hazırlanır...')
     controller.current=new AbortController()
     try {
       const data=await requestChat('/api/tecgpt-guest',messages,{},setNotice,fetch,undefined,controller.current.signal)

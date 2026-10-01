@@ -22,7 +22,7 @@ export function createJobQueue(answer,{capacity=3,runMs=90000,leaseMs=45000,ttlM
    const result=await answer(job.messages,{review:true,signal:job.controller.signal});
    job.controller.signal.throwIfAborted();
    if(!result.guardAccepted)throw Error('guard-rejected');
-   job.result={reply:result.reply,model:result.model,provider:'local-9b',rejected:['out_of_scope','private_data'].includes(result.scope),needsReview:result.kind==='unknown',reviewed:result.reviewed,seconds:result.seconds};
+   job.result={reply:result.reply,model:result.model,provider:'local-9b',scope:result.scope,kind:result.kind,guardAccepted:result.guardAccepted,rejected:['out_of_scope','private_data'].includes(result.scope),needsReview:result.kind==='unknown',reviewed:result.reviewed,seconds:result.seconds};
    finish(job,'done');
   }catch(error){if(job.state!=='failed')finish(job,'failed',job.controller.signal.aborted?'deadline':error.name);}
   finally{clearTimeout(timer);active=null;void pump();}
@@ -49,4 +49,3 @@ export function createJobQueue(answer,{capacity=3,runMs=90000,leaseMs=45000,ttlM
   close(){closed=true;waiting.length=0;clearInterval(cleaner);for(const job of jobs.values())job.controller.abort();},
  };
 }
-

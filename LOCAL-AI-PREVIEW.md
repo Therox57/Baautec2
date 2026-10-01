@@ -31,3 +31,7 @@ A generation has a 90-second deadline shared across understanding, generation, r
 This fixes immediate rejection of a second concurrent message, not model reasoning limitations. Queue capacity, genuine quotas, unavailable PC/tunnel and failed quality checks can still produce visible errors. The local demo and direct Ollama clients are separate consumers; keep those idle while serving the preview to avoid GPU contention.
 
 Run `node --test local-ai/tests/queue.test.mjs local-ai/tests/contract.test.mjs` and `npm run test:security`. Real model evidence is in the runtime's availability-live-results.json; test counts are reported only after completion.
+
+Further general QA fixes: explicit assistant identity takes precedence over inconsistent ambiguity metadata; private/out-of-scope refusals cannot be reclassified as clarification. Clarification review requires a complete question. User-requested list formats override the default comparison prose. Guest storage applies only each tab's changes, preserving another tab's completed reply; malformed histories are discarded safely. Added regression coverage for these cases.
+
+Build validation uses temporary non-secret Supabase placeholders locally because the app intentionally throws when its public configuration is absent. This ensures the chat UI is actually bundled. Vercel continues to build with its existing real project configuration.

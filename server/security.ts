@@ -97,4 +97,3 @@ export function sendSecurityError(error: unknown, res: any): boolean {
   res.status(error.status).json({ error: error.message });
   return true;
 }
-
