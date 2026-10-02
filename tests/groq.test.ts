@@ -1142,6 +1142,8 @@ test('OpenRouter uses its endpoint, reasoning and strict schema without exposing
       assert.deepEqual(body.reasoning, {effort:'medium',exclude:true});
       assert.equal(body.reasoning_effort, undefined);
       assert.equal(body.provider.require_parameters, true);
+      assert.equal(body.provider.sort, 'price');
+      assert.deepEqual(body.provider.max_price, {prompt:0.04,completion:0.20});
       assert.equal(body.response_format.json_schema.strict, true);
       return Response.json({choices:[{finish_reason:'stop',message:{reasoning:'SECRET REASONING',content:JSON.stringify({scope:'smalltalk',has_verified_answer:true,reply:'Salam! Nə barədə danışaq?'})}}]});
     }) as typeof fetch,

@@ -591,7 +591,7 @@ export async function answerConversationWithGroq(
           ],
           temperature: 0.4,
           ...(provider === 'openrouter'
-            ? { max_tokens: 900, provider: { require_parameters: true } }
+            ? { max_tokens: 900, provider: { require_parameters: true, sort: 'price', max_price: { prompt: 0.04, completion: 0.20 } } }
             : { max_completion_tokens: 900 }),
           response_format: model.startsWith('openai/gpt-oss-') ? {
             type: 'json_schema',
