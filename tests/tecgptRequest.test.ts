@@ -23,3 +23,11 @@ test('cancelling a live client request aborts transport without creating retries
  const fake:typeof fetch=async(_url,init)=>{calls++;setTimeout(()=>controller.abort(),2);return new Promise((_,reject)=>init?.signal?.addEventListener('abort',()=>reject(new DOMException('cancel','AbortError')),{once:true}));};
  await assert.rejects(()=>requestChat('/api/tecgpt-guest',messages,{},()=>{},fake,async()=>{},controller.signal));assert.equal(calls,1);
 });
+
+
+test('daily quota message is shown without retrying or inventing an AI answer', async () => {
+ let calls=0;
+ const message='Gündəlik 30 sual limitinə çatmısınız. Limit Bakı vaxtı ilə gecə 00:00-da yenilənəcək.';
+ await assert.rejects(()=>requestChat('/api/tecgpt-guest',messages,{},()=>{},async()=>{calls++;return Response.json({error:message,retryAfter:60},{status:429});},async()=>{}),{message});
+ assert.equal(calls,1);
+});

@@ -56,7 +56,7 @@ export function clientIp(req: RequestLike): string {
 }
 type Bucket = 'guest-browser' | 'login-ip' | 'login-account' | 'register-ip' | 'register-global' | 'portal-user' | 'local-poll' | 'guest-burst' | 'guest-hour' | 'guest-day' | 'auth-ip' | 'user-minute' | 'user-hour' | 'auth-day' | 'provider-minute' | 'paid-provider-minute' | 'provider-day';
 const configs: Record<Bucket, { limit: number; window: '1 m' | '15 m' | '1 h' | '1 d'; prefix: string }> = {
-  'guest-browser': {limit:20,window:'1 h',prefix:'tecgpt:guest:browser-hour'},
+  'guest-browser': {limit:30,window:'1 d',prefix:'tecgpt:guest:browser-day'},
   'login-ip': {limit:8,window:'15 m',prefix:'portal:login:ip'},
   'login-account': {limit:5,window:'15 m',prefix:'portal:login:account'},
   'register-ip': {limit:5,window:'1 h',prefix:'portal:register:ip'},
@@ -76,12 +76,36 @@ const configs: Record<Bucket, { limit: number; window: '1 m' | '15 m' | '1 h' | 
   'user-hour': { limit: 200, window: '1 h', prefix: 'tecgpt:auth:user-hour' },
   'auth-day': { limit: 2000, window: '1 d', prefix: 'tecgpt:auth:daily-global' },
 };
+export const GUEST_DAILY_LIMIT = 30;
+export function guestDailyWindow(now = Date.now()): {day: string; reset: number} {
+  const offset = 4 * 60 * 60 * 1000;
+  const dayLength = 24 * 60 * 60 * 1000;
+  const shifted = now + offset;
+  return {day: new Date(shifted).toISOString().slice(0,10), reset: (Math.floor(shifted / dayLength) + 1) * dayLength - offset};
+}
+// Atomic allowance check, increment and expiry; parallel requests cannot exceed 30.
+const DAILY_QUOTA_SCRIPT = `local count = tonumber(redis.call('GET', KEYS[1]) or '0')
+if count >= tonumber(ARGV[1]) then return 0 end
+redis.call('INCR', KEYS[1])
+redis.call('EXPIREAT', KEYS[1], ARGV[2])
+return 1`;
+export async function consumeGuestDailyQuota(identifier: string, evaluate: (script: string, keys: string[], args: number[]) => Promise<unknown>, now = Date.now()): Promise<void> {
+  const {day, reset} = guestDailyWindow(now);
+  const allowed = Number(await evaluate(DAILY_QUOTA_SCRIPT, ['tecgpt:guest:browser-day:' + identifier + ':' + day], [GUEST_DAILY_LIMIT, Math.floor(reset/1000)]));
+  if (allowed === 0) throw new HttpError(429, 'Gündəlik 30 sual limitinə çatmısınız. Limit Bakı vaxtı ilə gecə 00:00-da yenilənəcək.', Math.max(1,Math.ceil((reset-now)/1000)));
+  if (allowed !== 1) throw new HttpError(503, 'TECGPT sorğu limiti hazırda yoxlanıla bilmir.');
+}
 export async function enforceLimit(bucket: Bucket, identifier: string): Promise<void> {
   const url = process.env.KV_REST_API_URL;
   const token = process.env.KV_REST_API_TOKEN;
   if (!url || !token) throw new HttpError(503, 'TECGPT təhlükəsizlik xidməti hazır deyil.');
   const config = configs[bucket];
   try {
+    if (bucket === 'guest-browser') {
+      const redis = new Redis({url, token});
+      await consumeGuestDailyQuota(identifier, (script, keys, args) => redis.eval(script, keys, args));
+      return;
+    }
     const limiter = new Ratelimit({
       redis: new Redis({ url, token }),
       limiter: Ratelimit.slidingWindow(config.limit, config.window),
@@ -91,7 +115,7 @@ export async function enforceLimit(bucket: Bucket, identifier: string): Promise<
     const result = await limiter.limit(identifier);
     // Upstash can return success:true on a timeout. Fail closed for paid calls.
     if (result.reason === 'timeout') throw new HttpError(503, 'TECGPT sorğu limiti hazırda yoxlanıla bilmir.');
-    if (!result.success) throw new HttpError(429, bucket === 'guest-browser' ? 'TECGPT hələlik sınaq rejimindədir: bu brauzerdən saatda 20 sual verilə bilər. Bir qədər sonra yenidən yoxla.' : 'Sorğu limitinə çatmısınız. Bir qədər sonra yenidən yoxlayın.',
+    if (!result.success) throw new HttpError(429, 'Sorğu limitinə çatmısınız. Bir qədər sonra yenidən yoxlayın.',
       Math.max(1, Math.ceil((result.reset - Date.now()) / 1000)));
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -102,20 +126,21 @@ export function sendSecurityError(error: unknown, res: any): boolean {
   if (!(error instanceof HttpError)) return false;
   if (error.status === 405) res.setHeader('Allow', 'POST');
   if (error.retryAfter) res.setHeader('Retry-After', String(error.retryAfter));
-  res.status(error.status).json({ error: error.message });
+  res.status(error.status).json({ error: error.message, ...(error.retryAfter ? {retryAfter: error.retryAfter, resetAt: new Date(Date.now()+error.retryAfter*1000).toISOString()} : {}) });
   return true;
 }
 
 // Anonymous quota marker, not an authentication or tracking credential.
 export function guestBrowserId(req: RequestLike, res: {setHeader: (key:string,value:string)=>void}, signingKey = process.env.KV_REST_API_TOKEN): string {
  if (!signingKey) throw new HttpError(503,'TECGPT təhlükəsizlik xidməti hazır deyil.');
+ const setCookie = (id:string) => res.setHeader('Set-Cookie','__Host-tec_guest='+id+'.'+sign(id)+'; Path=/; Max-Age=604800; HttpOnly; Secure; SameSite=Strict');
  const sign = (id:string) => createHmac('sha256',signingKey).update('tecgpt-demo-quota:'+id).digest('hex');
  const entries = String(req.headers.cookie || '').split(';').map(value=>value.trim()).filter(value=>value.startsWith('__Host-tec_guest='));
  if(entries.length===1){
   const parts=entries[0].slice('__Host-tec_guest='.length).split('.');
-  if(parts.length===2 && /^[a-f0-9]{32}$/.test(parts[0]) && /^[a-f0-9]{64}$/.test(parts[1]) && timingSafeEqual(Buffer.from(sign(parts[0]),'hex'),Buffer.from(parts[1],'hex'))) return parts[0];
+  if(parts.length===2 && /^[a-f0-9]{32}$/.test(parts[0]) && /^[a-f0-9]{64}$/.test(parts[1]) && timingSafeEqual(Buffer.from(sign(parts[0]),'hex'),Buffer.from(parts[1],'hex'))) { setCookie(parts[0]); return parts[0]; }
  }
  const id=randomBytes(16).toString('hex');
- res.setHeader('Set-Cookie','__Host-tec_guest='+id+'.'+sign(id)+'; Path=/; Max-Age=3600; HttpOnly; Secure; SameSite=Strict');
+ setCookie(id);
  return id;
 }

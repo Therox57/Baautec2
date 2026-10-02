@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { HttpError, clientIp, guestBrowserId, validateChatRequest } from '../server/security.js';
+import { HttpError, clientIp, guestBrowserId, guestDailyWindow, consumeGuestDailyQuota, validateChatRequest } from '../server/security.js';
 import { csvCell } from '../src/csv.js';
 
 function request(overrides: Record<string, unknown> = {}) {
@@ -76,3 +76,34 @@ test('CSV cells cannot execute spreadsheet formulas', () => {
   assert.notEqual(guestBrowserId(request({headers:{cookie:firstCookie.slice(0,-1)+'z'}}),res,'test-signing-key'),first);
   assert.notEqual(guestBrowserId(request({headers:{cookie:firstCookie+'; '+firstCookie}}),res,'test-signing-key'),first);
  });
+
+
+test('guest day resets at Baku midnight, not UTC midnight', () => {
+  const before = Date.parse('2026-10-02T19:59:59Z');
+  assert.deepEqual(guestDailyWindow(before), {day:'2026-10-02',reset:Date.parse('2026-10-02T20:00:00Z')});
+  assert.deepEqual(guestDailyWindow(before+1000), {day:'2026-10-03',reset:Date.parse('2026-10-03T20:00:00Z')});
+  assert.equal(guestDailyWindow(Date.parse('2026-10-02T00:00:00Z')).day,'2026-10-02');
+});
+
+test('guest daily quota blocks request 31, preserves the browser across chats and renews next day', async () => {
+  const counters = new Map<string,number>();
+  const evaluate = async (_script:string, keys:string[], args:number[]) => {
+    const count = counters.get(keys[0]) ?? 0;
+    if(count >= args[0]) return 0;
+    counters.set(keys[0], count+1);
+    return 1;
+  };
+  const now=Date.parse('2026-10-02T19:59:50Z');
+  for(let i=0;i<30;i++)await consumeGuestDailyQuota('browser-a',evaluate,now);
+  await assert.rejects(()=>consumeGuestDailyQuota('browser-a',evaluate,now), (error:unknown)=>{
+    assert.ok(error instanceof HttpError);
+    assert.equal(error.status,429);
+    assert.equal(error.retryAfter,10);
+    assert.match(error.message,/Gündəlik 30 sual/);
+    assert.match(error.message,/00:00/);
+    return true;
+  });
+  await consumeGuestDailyQuota('browser-b',evaluate,now);
+  await consumeGuestDailyQuota('browser-a',evaluate,now+10000);
+  await assert.rejects(()=>consumeGuestDailyQuota('browser-a',async()=>undefined,now), (error:unknown)=>error instanceof HttpError&&error.status===503);
+});
