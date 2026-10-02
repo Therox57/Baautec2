@@ -156,7 +156,8 @@ test('Groq yalnız təsdiqlənmiş lokal kontekstlə çağırılır', async () =
     650
   );
   assert.equal(body.temperature, 0.35);
-  assert.equal(body.reasoning_effort, 'medium');
+  assert.equal(body.reasoning_effort, 'low'
+  );
   assert.equal(body.include_reasoning, false);
   assert.equal(body.stream, false);
   assert.equal('tools' in body, false);
@@ -923,7 +924,7 @@ test('əsas chat yolu uyğun verified knowledge və real söhbət konteksti ilə
     body.max_completion_tokens, 900
   );
   assert.equal(
-    body.reasoning_effort, 'low'
+    body.reasoning_effort, 'medium'
   );
   assert.equal(
     body.include_reasoning,
