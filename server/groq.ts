@@ -600,7 +600,7 @@ export async function answerConversationWithGroq(
           } : { type: 'json_object' },
           ...(model.startsWith('openai/gpt-oss-')
             ? {
-                reasoning_effort: 'low',
+                reasoning_effort: 'medium',
                 include_reasoning: false,
               }
             : {}),
