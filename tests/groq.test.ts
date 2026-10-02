@@ -920,12 +920,10 @@ test('əsas chat yolu uyğun verified knowledge və real söhbət konteksti ilə
   assert.ok(result);
   assert.equal(body.temperature, 0.4);
   assert.equal(
-    body.max_completion_tokens,
-    1800
+    body.max_completion_tokens, 900
   );
   assert.equal(
-    body.reasoning_effort,
-    'medium'
+    body.reasoning_effort, 'low'
   );
   assert.equal(
     body.include_reasoning,

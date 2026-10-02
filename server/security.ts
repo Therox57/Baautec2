@@ -64,9 +64,9 @@ const configs: Record<Bucket, { limit: number; window: '1 m' | '15 m' | '1 h' | 
   // Keep headroom and fall back locally instead of surfacing provider 429s.
   'local-poll': { limit: 60, window: '1 m', prefix: 'tecgpt:local:poll' },
   'provider-minute': { limit: 6, window: '1 m', prefix: 'tecgpt:provider:minute' },
-  'provider-day': { limit: 900, window: '1 d', prefix: 'tecgpt:provider:daily-attempts' },
+  'provider-day': { limit: 100, window: '1 d', prefix: 'tecgpt:provider:daily-attempts' },
   'guest-burst': { limit: 10, window: '1 m', prefix: 'tecgpt:guest:minute' },
-  'guest-hour': { limit: 60, window: '1 h', prefix: 'tecgpt:guest:hourly' },
+  'guest-hour': { limit: 5, window: '1 h', prefix: 'tecgpt:guest:hourly' },
   'guest-day': { limit: 1000, window: '1 d', prefix: 'tecgpt:guest:daily-global' },
   'auth-ip': { limit: 60, window: '1 m', prefix: 'tecgpt:auth:ip' },
   'user-minute': { limit: 20, window: '1 m', prefix: 'tecgpt:auth:user-minute' },
@@ -88,7 +88,7 @@ export async function enforceLimit(bucket: Bucket, identifier: string): Promise<
     const result = await limiter.limit(identifier);
     // Upstash can return success:true on a timeout. Fail closed for paid calls.
     if (result.reason === 'timeout') throw new HttpError(503, 'TECGPT sorğu limiti hazırda yoxlanıla bilmir.');
-    if (!result.success) throw new HttpError(429, 'Sorğu limitinə çatmısınız. Bir qədər sonra yenidən yoxlayın.',
+    if (!result.success) throw new HttpError(429, bucket === 'guest-hour' ? 'TECGPT hələlik sınaq rejimindədir: eyni internet ünvanından saatda 5 sual verilə bilər. Bir qədər sonra yenidən yoxla.' : 'Sorğu limitinə çatmısınız. Bir qədər sonra yenidən yoxlayın.',
       Math.max(1, Math.ceil((result.reset - Date.now()) / 1000)));
   } catch (error) {
     if (error instanceof HttpError) throw error;
