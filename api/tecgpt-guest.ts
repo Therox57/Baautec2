@@ -3,6 +3,7 @@ import {isLocalPreviewConfigured, answerWithLocalPreview, localJobId, localReque
 
 import {
   clientIp,
+  guestBrowserId,
   enforceLimit,
   validateChatRequest,
   sendSecurityError,
@@ -75,6 +76,8 @@ export default async function handler(req: any, res: any) {
     const jobId=isLocalPreviewConfigured()?localJobId(req):undefined;
     if(jobId)await enforceLimit('local-poll',ip);
     else {
+    const browserId=guestBrowserId(req,res);
+    await enforceLimit("guest-browser", browserId);
     await enforceLimit("guest-burst", ip);
     await enforceLimit("guest-hour", ip);
     }

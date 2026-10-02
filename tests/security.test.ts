@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { HttpError, clientIp, validateChatRequest } from '../server/security.js';
+import { HttpError, clientIp, guestBrowserId, validateChatRequest } from '../server/security.js';
 import { csvCell } from '../src/csv.js';
 
 function request(overrides: Record<string, unknown> = {}) {
@@ -66,3 +66,13 @@ test('CSV cells cannot execute spreadsheet formulas', () => {
   assert.equal(csvCell('normal'), '"normal"');
   assert.equal(csvCell('a"b'), '"a""b"');
 });
+
+ test('guest quotas separate browsers sharing an IP and reject forged or duplicate cookies',()=>{
+  let header='';const res={setHeader: (_k:string,value:string)=>{header=value;}};
+  const first=guestBrowserId(request(),res,'test-signing-key');const firstCookie=header.split(';')[0];
+  assert.match(header,/HttpOnly; Secure; SameSite=Strict/);
+  assert.equal(guestBrowserId(request({headers:{cookie:firstCookie}}),res,'test-signing-key'),first);
+  const second=guestBrowserId(request(),res,'test-signing-key');assert.notEqual(second,first);
+  assert.notEqual(guestBrowserId(request({headers:{cookie:firstCookie.slice(0,-1)+'z'}}),res,'test-signing-key'),first);
+  assert.notEqual(guestBrowserId(request({headers:{cookie:firstCookie+'; '+firstCookie}}),res,'test-signing-key'),first);
+ });
