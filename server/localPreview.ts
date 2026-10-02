@@ -2,7 +2,7 @@
 import {createHash,randomUUID} from 'node:crypto';
 import { HttpError, type ChatMessage } from './security.js';
 export function isLocalPreviewConfigured(): boolean {
- return process.env.VERCEL_ENV === 'preview' && !!process.env.TECGPT_LOCAL_URL && !!process.env.TECGPT_LOCAL_BRIDGE_KEY;
+ return process.env.TECGPT_PROVIDER !== 'openrouter' && process.env.VERCEL_ENV === 'preview' && !!process.env.TECGPT_LOCAL_URL && !!process.env.TECGPT_LOCAL_BRIDGE_KEY;
 }
 export function localJobId(req: {body?: unknown}): string | undefined {
  let body=req.body;

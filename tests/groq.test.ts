@@ -1125,3 +1125,45 @@ test('unknown-answer response contract requires a verified-answer decision', asy
   });
   assert.equal(result, null);
 });
+
+
+test('OpenRouter uses its endpoint, reasoning and strict schema without exposing reasoning', async () => {
+  let calls = 0;
+  const result = await answerConversationWithGroq([{role:'user',text:'Salam'}], {
+    provider: 'openrouter', apiKey: 'test-router-key',
+    fetch: (async (url, options) => {
+      calls++;
+      assert.equal(url, 'https://openrouter.ai/api/v1/chat/completions');
+      assert.equal((options?.headers as Record<string,string>).Authorization, 'Bearer test-router-key');
+      const body = JSON.parse(String(options?.body));
+      assert.equal(body.model, 'openai/gpt-oss-120b');
+      assert.equal(body.max_tokens, 900);
+      assert.equal(body.max_completion_tokens, undefined);
+      assert.deepEqual(body.reasoning, {effort:'medium',exclude:true});
+      assert.equal(body.reasoning_effort, undefined);
+      assert.equal(body.provider.require_parameters, true);
+      assert.equal(body.response_format.json_schema.strict, true);
+      return Response.json({choices:[{finish_reason:'stop',message:{reasoning:'SECRET REASONING',content:JSON.stringify({scope:'smalltalk',has_verified_answer:true,reply:'Salam! Nə barədə danışaq?'})}}]});
+    }) as typeof fetch,
+  });
+  assert.equal(calls,1);
+  assert.equal(result?.reply,'Salam! Nə barədə danışaq?');
+  assert.doesNotMatch(JSON.stringify(result),/SECRET REASONING/);
+});
+
+test('OpenRouter payment/rate-limit errors and unverified knowledge fail safely', async () => {
+  for (const status of [402,429,503]) {
+    let calls = 0;
+    const result = await answerConversationWithGroq([{role:'user',text:'TEC nədir?'}], {
+      provider:'openrouter',apiKey:'test',fetch:(async () => {calls++;return new Response('',{status});}) as typeof fetch,
+    });
+    assert.equal(result,null);
+    assert.equal(calls,1);
+  }
+  const result = await answerConversationWithGroq([{role:'user',text:'TEC otağı haradadır?'}], {
+    provider:'openrouter',apiKey:'test',fetch:(async () => Response.json({choices:[{finish_reason:'stop',message:{content:JSON.stringify({scope:'baau_tec',has_verified_answer:false,reply:'301'})}}]})) as typeof fetch,
+  });
+  assert.equal(result?.needsReview,true);
+  assert.match(result?.reply ?? '', /təsdiqlənmiş məlumat yoxdur/);
+  assert.doesNotMatch(result?.reply ?? '', /301/);
+});

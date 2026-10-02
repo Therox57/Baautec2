@@ -15,6 +15,13 @@ const GROQ_URL =
   'https://api.groq.com/openai/v1/chat/completions';
 
 const DEFAULT_MODEL = 'openai/gpt-oss-120b';
+export type ChatProvider = 'groq' | 'openrouter';
+export function getChatProvider(): ChatProvider {
+  return process.env.TECGPT_PROVIDER === 'openrouter' ? 'openrouter' : 'groq';
+}
+function providerKey(provider: ChatProvider): string | undefined {
+  return provider === 'openrouter' ? process.env.OPENROUTER_API_KEY : process.env.GROQ_API_KEY;
+}
 
 const BLOCKED_PATTERNS = [
   /\b(ignore|previous instructions?|system prompt|developer message|jailbreak)\b/i,
@@ -279,6 +286,7 @@ export type GroqDependencies = {
   apiKey?: string;
   model?: string;
   approvedKnowledge?: string;
+  provider?: ChatProvider;
 };
 
 function latestUserText(messages: ChatMessage[]): string {
@@ -475,7 +483,7 @@ export function getNaturalFallbackForConversation(
 }
 
 export function isGroqConfigured(
-  apiKey = process.env.GROQ_API_KEY
+  apiKey = providerKey(getChatProvider())
 ): boolean {
   return Boolean(apiKey?.trim());
 }
@@ -505,7 +513,7 @@ function fullKnowledgeUrls(): string {
 }
 
 function leaksInternalData(reply: string): boolean {
-  return /\b(GROQ_API_KEY|KV_REST_API|SUPABASE_[A-Z_]+|system prompt|developer message)\b/i
+  return /\b(GROQ_API_KEY|OPENROUTER_API_KEY|KV_REST_API|SUPABASE_[A-Z_]+|system prompt|developer message)\b/i
     .test(reply);
 }
 
@@ -522,8 +530,8 @@ export async function answerConversationWithGroq(
   messages: ChatMessage[],
   dependencies: Partial<GroqDependencies> = {}
 ): Promise<GroqResult | null> {
-  const apiKey =
-    dependencies.apiKey ?? process.env.GROQ_API_KEY;
+  const provider = dependencies.provider ?? getChatProvider();
+  const apiKey = dependencies.apiKey ?? providerKey(provider);
 
   if (!apiKey?.trim()) {
     return null;
@@ -531,7 +539,7 @@ export async function answerConversationWithGroq(
 
   const model =
     dependencies.model ||
-    process.env.GROQ_MODEL ||
+    (provider === 'openrouter' ? process.env.OPENROUTER_MODEL : process.env.GROQ_MODEL) ||
     DEFAULT_MODEL;
 
   const fetchImpl =
@@ -564,10 +572,10 @@ export async function answerConversationWithGroq(
 
   try {
     const response = await fetchImpl(
-      GROQ_URL,
+      provider === 'openrouter' ? 'https://openrouter.ai/api/v1/chat/completions' : GROQ_URL,
       {
         method: 'POST',
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(provider === 'openrouter' ? 20000 : 10000),
         headers: {
           Authorization: 'Bearer ' + apiKey,
           'Content-Type': 'application/json',
@@ -582,7 +590,9 @@ export async function answerConversationWithGroq(
             ...recentConversation,
           ],
           temperature: 0.4,
-          max_completion_tokens: 900,
+          ...(provider === 'openrouter'
+            ? { max_tokens: 900, provider: { require_parameters: true } }
+            : { max_completion_tokens: 900 }),
           response_format: model.startsWith('openai/gpt-oss-') ? {
             type: 'json_schema',
             json_schema: {
@@ -600,8 +610,9 @@ export async function answerConversationWithGroq(
           } : { type: 'json_object' },
           ...(model.startsWith('openai/gpt-oss-')
             ? {
-                reasoning_effort: 'medium',
-                include_reasoning: false,
+                ...(provider === 'openrouter'
+                  ? { reasoning: { effort: 'medium', exclude: true } }
+                  : { reasoning_effort: 'medium', include_reasoning: false }),
               }
             : {}),
           stream: false,
@@ -610,7 +621,7 @@ export async function answerConversationWithGroq(
     );
 
     if (!response.ok) {
-      console.warn('[TECGPT] Groq conversation unavailable', {
+      console.warn('[TECGPT] Chat provider unavailable', {
         status: response.status,
         model,
       });
@@ -667,7 +678,7 @@ export async function answerConversationWithGroq(
     console.info('[TECGPT] Conversation answered', { model, scope, promptTokens: data?.usage?.prompt_tokens });
     return { reply, model };
   } catch (error) {
-    console.warn('[TECGPT] Groq conversation failed', {
+    console.warn('[TECGPT] Chat provider failed', {
       model,
       errorType:
         error instanceof Error

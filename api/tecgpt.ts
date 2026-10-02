@@ -25,6 +25,7 @@ import {
   answerConversationWithGroq,
   getNaturalFallbackForConversation,
   isGroqConfigured,
+  getChatProvider,
   resolveGroqTopic,
 } from "../server/groq.js";
 
@@ -147,8 +148,9 @@ export default async function handler(req: any, res: any) {
 
     if (isGroqConfigured()) {
       try {
-        await enforceLimit("provider-minute", "groq");
-        await enforceLimit("provider-day", "groq");
+        const provider = getChatProvider();
+        await enforceLimit(provider === 'openrouter' ? 'paid-provider-minute' : 'provider-minute', provider);
+        await enforceLimit("provider-day", provider);
 
         const latestQuestion = messages.at(-1)!.text;
         let approvedKnowledge = "";
@@ -164,7 +166,7 @@ export default async function handler(req: any, res: any) {
           return res.status(200).json({
             reply: groq.reply,
             model: groq.model,
-            provider: "groq",
+            provider,
             rejected: groq.rejected ?? false,
           });
         }
