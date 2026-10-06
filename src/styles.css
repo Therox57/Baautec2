@@ -764,3 +764,14 @@
 .tec-public-sidebar a:focus-visible,.tec-mobile-bar button:focus-visible{outline:3px solid #e5c575;outline-offset:3px}
 .tec-public-body{min-width:0}.tec-mobile-bar{display:none}.tec-coming-soon{min-height:100dvh;display:grid;place-items:center;padding:32px 20px}.tec-coming-soon-card{width:min(100%,540px);padding:56px 28px;text-align:center}.tec-coming-soon-card>svg{color:#244c83;margin-bottom:20px}.tec-section-label{font-size:13px;font-weight:700;letter-spacing:.08em;color:#68778a}.tec-coming-soon h1{font-size:36px;margin-bottom:12px}.tec-coming-soon-card>p:last-child{color:#68778a;line-height:1.6;margin-bottom:0}
 @media(max-width:800px){.tec-public-layout{display:block}.tec-mobile-bar{display:flex;align-items:center;gap:14px;background:#18345f;color:#fff;padding:12px 16px;position:sticky;top:0;z-index:30}.tec-mobile-bar .icon-btn{background:#ffffff12;color:#fff;border-color:#ffffff35}.tec-public-sidebar{display:none;position:static;height:auto;padding:18px}.tec-public-sidebar.is-open{display:block}.tec-menu-brand{display:none}.tec-public-sidebar nav{gap:6px}.tec-public-sidebar nav a{padding:14px}.tec-coming-soon{min-height:calc(100dvh - 62px)}.tec-coming-soon-card{padding:44px 24px}}
+
+/* Mobile navigation opens from the left, above the page. */
+.tec-menu-backdrop,.tec-menu-close{display:none}
+@media(max-width:800px){
+  .tec-public-sidebar{display:block;position:fixed;inset:0 auto 0 0;width:min(300px,84vw);height:100dvh;padding:28px 18px;overflow-y:auto;z-index:60;transform:translateX(-100%);visibility:hidden;transition:transform .2s ease,visibility .2s ease;box-shadow:12px 0 36px #0a183833}
+  .tec-public-sidebar.is-open{transform:translateX(0);visibility:visible}
+  .tec-public-sidebar .tec-menu-brand{display:flex;padding-top:54px}
+  .tec-menu-close{display:grid;position:absolute;right:18px;top:20px;background:#ffffff12;color:#fff;border-color:#ffffff35}
+  .tec-menu-backdrop{display:block;position:fixed;inset:0;z-index:50;border:0;background:#0b183a70;cursor:pointer}
+}
+@media(prefers-reduced-motion:reduce){.tec-public-sidebar{transition:none}}
