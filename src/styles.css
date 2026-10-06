@@ -775,3 +775,10 @@
   .tec-menu-backdrop{display:block;position:fixed;inset:0;z-index:50;border:0;background:#0b183a70;cursor:pointer}
 }
 @media(prefers-reduced-motion:reduce){.tec-public-sidebar{transition:none}}
+
+/* Keep the chat within the shared site's mobile header. */
+@media(max-width:800px){
+  .tec-public-body>.tecgpt-shell{display:block;min-height:calc(100dvh - 62px)}
+  .tec-public-body>.tecgpt-shell>.tecgpt-sidebar{display:none}
+  .tec-public-body .tecgpt-main{height:calc(100dvh - 62px)}
+}

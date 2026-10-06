@@ -50,9 +50,20 @@ export function App() {
   const path = window.location.pathname.replace(/\/+$/, '') || '/'
   if (path === '/admin') return <AdminPage />
   if (path === '/tecgpt-test') return <TecGPTBetaPage />
-  if (path === '/tecgpt-guest') return <TecGPTGuestPage />
-  const structure = path === '/struktur'
-  return <PublicLayout structure={structure}>{structure ? <StructurePage /> : <MembershipPage />}</PublicLayout>
+  return <PublicSite path={path} />
+}
+
+function PublicSite({ path }: { path: string }) {
+  const [intro, setIntro] = useState(() => {
+    try { return sessionStorage.getItem('tec-site-intro-seen') !== '1' } catch { return true }
+  })
+  function finishIntro() {
+    try { sessionStorage.setItem('tec-site-intro-seen', '1') } catch { /* Navigation remains available without storage. */ }
+    setIntro(false)
+  }
+  if (intro) return <Intro onDone={finishIntro} />
+  const section = path === '/struktur' ? 'structure' : path === '/tecgpt-guest' ? 'tecgpt' : 'registration'
+  return <PublicLayout section={section}>{section === 'structure' ? <StructurePage /> : section === 'tecgpt' ? <TecGPTGuestPage /> : <MembershipPage />}</PublicLayout>
 }
 
 function formatPhone(digits: string) {
@@ -115,7 +126,6 @@ function Intro({ onDone }: { onDone: () => void }) {
 function MembershipPage() {
   const currentYear = new Date().getFullYear()
   const years = useMemo(() => Array.from({ length: 40 }, (_, i) => currentYear - 15 - i), [currentYear])
-  const [intro, setIntro] = useState(true)
   const [privacyOpen, setPrivacyOpen] = useState(false)
   const [firstName,setFirstName] = useState('')
   const [lastName,setLastName] = useState('')
@@ -192,7 +202,6 @@ function MembershipPage() {
     } finally { setSubmitting(false) }
   }
 
-  if (intro) return <Intro onDone={() => setIntro(false)} />
   if (done) return <main className="center-page"><div className="card success-card"><CheckCircle2 className="success-icon"/><h1>Qeydiyyatınız uğurla tamamlandı!</h1><p>Tələbə Elmi Cəmiyyətinə göstərdiyiniz marağa görə təşəkkür edirik.</p></div></main>
 
   return <main className="page">
@@ -224,15 +233,7 @@ function MembershipPage() {
       </form>
     </div>
     <Modal open={privacyOpen} onClose={()=>setPrivacyOpen(false)} title="Məxfilik haqqında"><PrivacyContent/></Modal>
-    <a
-      className="tecgpt-float"
-      href="/tecgpt-guest"
-      aria-label="TECGPT-ni aç"
-      title="TECGPT-ni sına"
-    >
-      <img src="/tecgpt-logo.png" alt="" aria-hidden="true" className="tecgpt-float-logo" />
-      <span className="tecgpt-float-label">TECGPT</span>
-    </a>
+
   </main>
 }
 

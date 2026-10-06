@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { ClipboardList, Menu, Network, X } from 'lucide-react'
+import { ClipboardList, Menu, MessageCircle, Network, X } from 'lucide-react'
 
-export function PublicLayout({ structure, children }: { structure: boolean; children: ReactNode }) {
+export function PublicLayout({ section, children }: { section: 'registration' | 'structure' | 'tecgpt'; children: ReactNode }) {
   const [open, setOpen] = useState(false)
   const toggle = useRef<HTMLButtonElement>(null)
   const panel = useRef<HTMLElement>(null)
@@ -38,11 +38,13 @@ export function PublicLayout({ structure, children }: { structure: boolean; chil
       <button type="button" className="icon-btn tec-menu-close" aria-label="Menyunu bağla" onClick={closeMenu}><X size={22}/></button>
       <div className="tec-menu-brand"><img src="/baau-tec-official.png" alt=""/><div><strong>BAAU TEC</strong><span>Tələbə Elmi Cəmiyyəti</span></div></div>
       <nav aria-label="TEC bölmələri">
-        <a href="/" aria-current={!structure ? 'page' : undefined}><ClipboardList size={22}/><span>Qeydiyyat</span></a>
-        <a href="/struktur" aria-current={structure ? 'page' : undefined}><Network size={22}/><span>Struktur</span></a>
+        <a href="/" aria-current={section === 'registration' ? 'page' : undefined}><ClipboardList size={22}/><span>Qeydiyyat</span></a>
+        <a href="/struktur" aria-current={section === 'structure' ? 'page' : undefined}><Network size={22}/><span>Struktur</span></a>
+        <a href="/tecgpt-guest" aria-current={section === 'tecgpt' ? 'page' : undefined}><MessageCircle size={22}/><span>TECGPT</span></a>
       </nav>
     </aside>
     <div className="tec-public-body">{children}</div>
+    {section !== 'tecgpt' && <a className="tecgpt-float" href="/tecgpt-guest" aria-label="TECGPT-ni aç" title="TECGPT-ni aç"><img src="/tecgpt-logo.png" alt="" aria-hidden="true" className="tecgpt-float-logo"/><span className="tecgpt-float-label">TECGPT</span></a>}
   </div>
 }
 
