@@ -12,6 +12,7 @@ import {
 import { portal as supabase, registerMember } from './portalClient'
 import { csvCell } from './csv'
 import { TecGPTGuestPage } from './TecGPTGuestPage'
+import { PublicLayout, StructurePage } from './PublicLayout'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
@@ -50,7 +51,8 @@ export function App() {
   if (path === '/admin') return <AdminPage />
   if (path === '/tecgpt-test') return <TecGPTBetaPage />
   if (path === '/tecgpt-guest') return <TecGPTGuestPage />
-  return <MembershipPage />
+  const structure = path === '/struktur'
+  return <PublicLayout structure={structure}>{structure ? <StructurePage /> : <MembershipPage />}</PublicLayout>
 }
 
 function formatPhone(digits: string) {
