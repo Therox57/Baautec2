@@ -15,6 +15,7 @@ import { TecGPTGuestPage } from './TecGPTGuestPage'
 import { PublicLayout, StructurePage } from './PublicLayout'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { Analytics } from '@vercel/analytics/react'
 
 const MONTHS = ['Yanvar','Fevral','Mart','Aprel','May','İyun','İyul','Avqust','Sentyabr','Oktyabr','Noyabr','Dekabr']
 const COURSES = ['1-ci kurs','2-ci kurs','3-cü kurs','4-cü kurs','Magistr 1','Magistr 2']
@@ -48,11 +49,31 @@ type Errors = Partial<Record<'firstName'|'lastName'|'fatherName'|'birth'|'gender
 
 export function App() {
   const path = window.location.pathname.replace(/\/+$/, '') || '/'
-  if (path === '/admin') return <AdminPage />
-  if (path === '/tecgpt-test') return <TecGPTBetaPage />
-  if (path === '/tecgpt-guest') return <TecGPTGuestPage />
+  if (path === '/admin') return (
+    <>
+      <AdminPage />
+      <Analytics />
+    </>
+  )
+  if (path === '/tecgpt-test') return (
+    <>
+      <TecGPTBetaPage />
+      <Analytics />
+    </>
+  )
+  if (path === '/tecgpt-guest') return (
+    <>
+      <TecGPTGuestPage />
+      <Analytics />
+    </>
+  )
   const structure = path === '/struktur'
-  return <PublicLayout structure={structure}>{structure ? <StructurePage /> : <MembershipPage />}</PublicLayout>
+  return (
+    <>
+      <PublicLayout structure={structure}>{structure ? <StructurePage /> : <MembershipPage />}</PublicLayout>
+      <Analytics />
+    </>
+  )
 }
 
 function formatPhone(digits: string) {
