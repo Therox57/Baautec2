@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowUpRight, BookOpen, CalendarDays, Check, Clock3, MapPin, MessageCircle, Mic2, PenLine } from 'lucide-react'
+import { ArrowUpRight, BookOpen, CalendarDays, Check, Clock3, MapPin, MessageCircle, Mic2, Newspaper, PenLine } from 'lucide-react'
 import { clubs, dateLabel, events, instagram, upcomingEvents, writersPlan, type PlannedEvent } from './siteContent'
 
 const icons = { book: BookOpen, pen: PenLine, talk: Mic2 }
@@ -26,6 +26,7 @@ export function HomePage() {
       <div className="portal-hero-art"><img src="/baau-tec-official.png" alt="BAAU Tələbə Elmi Cəmiyyətinin loqosu" width="190" height="190"/><span>BAAU TEC<span>Tələbə Elmi Cəmiyyəti</span></span></div>
     </section>
     <div className="portal-stat-row"><a href="/klublar"><strong>3 klub</strong><span>Oxucular · Yazıçılar · Debat</span></a><a href="/tedbirler"><strong>İllik plan</strong><span>2026–2027 fəaliyyətləri</span></a><a href="#elaqe"><strong>205-ci otaq</strong><span>B korpusu · 2-ci mərtəbə</span></a></div>
+    <section className="portal-section"><div className="portal-section-title"><div><span className="portal-eyebrow">TEC-dən</span><h2>Son xəbərlər</h2></div><a href="/xeberler">Bütün xəbərlər <ArrowUpRight size={17}/></a></div><NewsEmpty compact/></section>
     <section className="portal-section"><div className="portal-section-title"><div><span className="portal-eyebrow">İllik plandan</span><h2>Yaxın tədbirlər</h2></div><a href="/tedbirler">Bütün tarixlər <ArrowUpRight size={17}/></a></div><p className="portal-plan-note">Saat və iştirak şərtləri rəsmi elanlarda dəqiqləşdiriləcək. Plan tarixləri dəyişə bilər.</p><div className="portal-event-grid">{next.map(event => <EventCard key={event.id} event={event}/>)}{next.length === 0 && <p>Yeni tədbir tarixi təqdim edilməyib.</p>}</div></section>
     <section className="portal-section"><div className="portal-section-title"><div><span className="portal-eyebrow">TEC-in nəzdində</span><h2>Klublar</h2></div><a href="/klublar">Ətraflı <ArrowUpRight size={17}/></a></div><div className="portal-club-grid">{clubs.map((club, index) => { const Icon = icons[club.icon]; return <a className={'portal-club-preview club-' + club.id} key={club.id} href={'/klublar#' + club.id}><div className="portal-club-mark"><Icon size={32}/><span>0{index + 1}</span></div><h3>{club.name}</h3><p>{club.leader}<br/>Klub rəhbəri</p><span>Fəaliyyətlərə bax <ArrowUpRight size={17}/></span></a> })}</div></section>
     <section className="portal-help"><div className="portal-help-icon"><MessageCircle size={29}/></div><div><span className="portal-eyebrow">BAAU və TEC haqqında</span><h2>TECGPT-yə sual ver</h2><p>Üzvlük, klublar və universitet haqqında məlumat almaq üçün.</p></div><a className="portal-button" href="/tecgpt-guest">Söhbəti aç <ArrowUpRight size={18}/></a></section>
@@ -43,4 +44,15 @@ export function EventsPage() {
 }
 export function ClubsPage() {
   return <main className="portal-page"><PageIntro title="Klublar" text="Hazırda TEC-in nəzdində üç klub fəaliyyət göstərir."/>{clubs.map(club => { const Icon = icons[club.icon]; return <section className={'portal-club-detail club-' + club.id} id={club.id} key={club.id}><div className="portal-club-symbol"><Icon size={38}/></div><div><h2>{club.name}</h2><div className="portal-leader"><span>Klub rəhbəri</span><strong>{club.leader}</strong></div><p>{club.description}</p><ul>{club.activities.map(activity => <li key={activity}><Check size={16}/>{activity}</li>)}</ul><div className="portal-actions"><a className="portal-button" href={instagram} target="_blank" rel="noopener noreferrer">Qoşulmaq üçün yaz <ArrowUpRight size={17}/></a><a className="portal-text-link" href="/tedbirler">Fəaliyyət planı</a></div></div></section> })}<section className="portal-help"><div><h2>TEC üzvlüyü</h2><p>Qeydiyyat ödənişsizdir. Kluba qoşulmaq üçün rəsmi səhifəyə yaz və ya 205-ci otağa yaxınlaş.</p></div><a className="portal-button" href="/qeydiyyat">Qeydiyyat <ArrowUpRight size={17}/></a></section></main>
+}
+
+function NewsEmpty({ compact = false }: { compact?: boolean }) {
+  return <div className={`portal-news-empty${compact ? ' is-compact' : ''}`}>
+    <div className="portal-news-symbol"><Newspaper size={28} aria-hidden="true"/></div>
+    <div><h2>Hələ xəbər paylaşılmayıb</h2><p>TEC-in tədbirləri, klub fəaliyyətləri və yenilikləri bu bölmədə paylaşılacaq.</p></div>
+    <a href={instagram} target="_blank" rel="noopener noreferrer">Rəsmi səhifəyə bax <ArrowUpRight size={17}/></a>
+  </div>
+}
+export function NewsPage() {
+  return <main className="portal-page"><PageIntro title="Xəbərlər" text="TEC-in tədbirləri, klubları və fəaliyyəti haqqında yeniliklər."/><NewsEmpty/></main>
 }

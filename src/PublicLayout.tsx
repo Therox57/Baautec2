@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { CalendarDays, ClipboardList, Home, LibraryBig, Menu, MessageCircle, Network, X } from 'lucide-react'
+import { CalendarDays, ClipboardList, Home, LibraryBig, Menu, MessageCircle, Network, Newspaper, X } from 'lucide-react'
 
-export function PublicLayout({ section, children }: { section: 'home' | 'registration' | 'structure' | 'tecgpt' | 'events' | 'clubs'; children: ReactNode }) {
+export function PublicLayout({ section, children }: { section: 'home' | 'registration' | 'structure' | 'tecgpt' | 'events' | 'clubs' | 'news'; children: ReactNode }) {
   const [open, setOpen] = useState(false)
   const toggle = useRef<HTMLButtonElement>(null)
   const panel = useRef<HTMLElement>(null)
@@ -39,6 +39,7 @@ export function PublicLayout({ section, children }: { section: 'home' | 'registr
       <div className="tec-menu-brand"><img src="/baau-tec-official.png" alt=""/><div><strong>BAAU TEC</strong><span>Tələbə Elmi Cəmiyyəti</span></div></div>
       <nav aria-label="TEC bölmələri">
         <a href="/" aria-current={section === 'home' ? 'page' : undefined}><Home size={22}/><span>Ana səhifə</span></a>
+        <a href="/xeberler" aria-current={section === 'news' ? 'page' : undefined}><Newspaper size={22}/><span>Xəbərlər</span></a>
         <a href="/tedbirler" aria-current={section === 'events' ? 'page' : undefined}><CalendarDays size={22}/><span>Tədbirlər</span></a>
         <a href="/klublar" aria-current={section === 'clubs' ? 'page' : undefined}><LibraryBig size={22}/><span>Klublar</span></a>
         <a href="/qeydiyyat" aria-current={section === 'registration' ? 'page' : undefined}><ClipboardList size={22}/><span>Qeydiyyat</span></a>
