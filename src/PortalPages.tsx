@@ -1,17 +1,56 @@
-import {useState} from 'react'
-import {ArrowUpRight, BookOpen, CalendarDays, Check, Clock3, ExternalLink, MapPin, MessageCircle, Mic2, PenLine} from 'lucide-react'
-import {clubs,dateLabel,events,instagram,upcomingEvents,writersPlan,type PlannedEvent} from './siteContent'
-const icons={book:BookOpen,pen:PenLine,talk:Mic2}
-function PageIntro({eyebrow,title,text}:{eyebrow:string;title:string;text:string}){return <header className="portal-page-heading"><span className="portal-eyebrow">{eyebrow}</span><h1>{title}</h1><p>{text}</p></header>}
-function EventCard({event}:{event:PlannedEvent}){return <article className="portal-event"><div className="portal-event-date"><CalendarDays size={17}/><time dateTime={event.date}>{dateLabel(event.date)}</time></div><span className="portal-tag">{event.club}</span><h3>{event.title}</h3><p>{event.format}</p><div className="portal-event-meta"><span><MapPin size={15}/> BAAU · otaq dəqiqləşdirilir</span><span><Clock3 size={15}/> Saat elan edilməyib</span></div>{event.note&&<p>{event.note}</p>}<a href={instagram} target="_blank" rel="noopener noreferrer">İştirak barədə soruş <ArrowUpRight size={16}/></a></article>}
-export function HomePage(){const next=upcomingEvents().slice(0,2);return <main className="portal-page">
- <section className="portal-hero"><div className="portal-hero-copy"><span className="portal-eyebrow">BAAU · Tələbə Elmi Cəmiyyəti</span><h1>Fikrini paylaş.<br/>İdeyanı həyata keçir.</h1><p>Elmi fəaliyyət, yaradıcılıq və yeni tanışlıqlar. TEC-də maraqlarını kəşf et, komandanı tap və tələbə həyatında iştirak et.</p><div className="portal-actions"><a className="portal-button portal-button-gold" href="/qeydiyyat">TEC-ə qoşul <ArrowUpRight size={18}/></a><a className="portal-button portal-button-light" href="/klublar">Klubları kəşf et</a></div><span className="portal-hero-note"><Check size={16}/> BAAU tələbələri üçün üzvlük ödənişsizdir</span></div><div className="portal-hero-art"><img src="/baau-tec-official.png" alt="BAAU Tələbə Elmi Cəmiyyətinin loqosu"/><span>Birlikdə öyrənirik.<br/>Birlikdə inkişaf edirik.</span></div></section>
- <div className="portal-stat-row"><div><strong>03</strong><span>Aktiv klub</span></div><div><strong>2026–27</strong><span>Fəaliyyət planı</span></div><div><strong>205</strong><span>B korpusu · 2-ci mərtəbə</span></div></div>
- <section className="portal-section"><div className="portal-section-title"><div><span className="portal-eyebrow">Təqvimdə növbəti</span><h2>Görüşmək üçün bir səbəb.</h2></div><a href="/tedbirler">Bütün tədbirlər <ArrowUpRight size={17}/></a></div><p className="portal-plan-note">İllik plandakı tarixlərdir. Dəyişikliklər, saat və iştirak şərtləri üçün rəsmi elanları yoxla.</p><div className="portal-event-grid">{next.map(event=><EventCard key={event.id} event={event}/>)}{next.length===0&&<p>Yeni tədbir elanları üçün rəsmi TEC səhifəsinə bax.</p>}</div></section>
- <section className="portal-section"><div className="portal-section-title"><div><span className="portal-eyebrow">Özünə yaxın olanı seç</span><h2>Sənin marağın, sənin klubun.</h2></div><a href="/klublar">Klublara bax <ArrowUpRight size={17}/></a></div><div className="portal-club-grid">{clubs.map(club=>{const Icon=icons[club.icon];return <a className="portal-club-preview" key={club.id} href={'/klublar#'+club.id}><Icon size={27}/><h3>{club.name}</h3><p>{club.tag}</p><span>Kəşf et <ArrowUpRight size={17}/></span></a>})}</div></section>
- <section className="portal-help"><div><span className="portal-eyebrow">Sualın var?</span><h2>TECGPT ilə başla.</h2><p>BAAU və TEC haqqında məlumat almaq üçün köməkçimizə yaz.</p></div><a className="portal-button" href="/tecgpt-guest"><MessageCircle size={19}/> TECGPT-ni aç</a></section>
- <section className="portal-contact"><div><MapPin size={24}/><h2>Bizi burada tap</h2><p>BAAU, B korpusu, 2-ci mərtəbə, 205-ci otaq.</p><small>Qəbul saatları barədə əvvəlcədən məlumat al.</small></div><a href={instagram} target="_blank" rel="noopener noreferrer">Rəsmi Instagram <ExternalLink size={17}/></a></section>
- <footer className="portal-footer">BAAU TEC · Öyrən, paylaş, inkişaf et.</footer>
- </main>}
-export function EventsPage(){const [filter,setFilter]=useState('Hamısı');const [archive,setArchive]=useState(false);const upcoming=upcomingEvents();const activeIds=new Set(upcoming.map(e=>e.id));const list=(archive?events.filter(e=>!activeIds.has(e.id)):upcoming).filter(e=>filter==='Hamısı'||e.club===filter);return <main className="portal-page"><PageIntro eyebrow="2026–2027 fəaliyyət planı" title="Tədbirlər" text="Kitab müzakirəsindən debatlara: marağına uyğun növbəti görüşü tap."/><p className="portal-plan-note">Bunlar planlaşdırılan tarixlərdir, yekun elan deyil. Saat, otaq və iştirak şərtləri hələ təqdim edilməyib.</p><div className="portal-filters" aria-label="Kluba görə süzgəc">{['Hamısı','Oxucular Klubu','Debat Klubu'].map(value=><button key={value} aria-pressed={filter===value} onClick={()=>setFilter(value)}>{value}</button>)}<button className="portal-archive" aria-pressed={archive} onClick={()=>setArchive(!archive)}>{archive?'Yaxın tarixləri göstər':'Keçmiş plan tarixləri'}</button></div><div className="portal-event-grid">{list.map(event=><EventCard key={event.id} event={event}/>)}{list.length===0&&<p>Bu seçim üzrə tədbir yoxdur.</p>}</div><section className="portal-section"><div className="portal-section-title"><div><span className="portal-eyebrow">Dəqiq tarixlər ayrıca elan ediləcək</span><h2>Yazıçılar Klubunun aylıq planı</h2></div></div><div className="portal-monthly-plan">{writersPlan.map(([month,title])=><div key={month}><span>{month}</span><strong>{title}</strong></div>)}</div><p className="portal-plan-note">Tarixlər akademik təqvimə və təşkilati imkanlara görə dəyişə bilər. Elektron toplu imkan daxilində hazırlanacaq.</p></section></main>}
-export function ClubsPage(){return <main className="portal-page"><PageIntro eyebrow="TEC-in nəzdində" title="Klublar" text="Oxumaq, yazmaq və fikrini əsaslandırmaq. Marağını paylaşan insanlarla birlikdə inkişaf et."/>{clubs.map(club=>{const Icon=icons[club.icon];return <section className="portal-club-detail" id={club.id} key={club.id}><div className="portal-club-symbol"><Icon size={38}/></div><div><span className="portal-eyebrow">{club.tag}</span><h2>{club.name}</h2><p>{club.description}</p><div className="portal-leader"><span>Klub rəhbəri</span><strong>{club.leader}</strong></div><ul>{club.activities.map(activity=><li key={activity}><Check size={16}/>{activity}</li>)}</ul><div className="portal-actions"><a className="portal-button" href={instagram} target="_blank" rel="noopener noreferrer">Qoşulmaq barədə yaz <ArrowUpRight size={17}/></a><a className="portal-text-link" href="/tedbirler">Fəaliyyət planına bax</a></div></div></section>})}<section className="portal-help"><div><h2>İlk addımı at.</h2><p>TEC qeydiyyatından keç. Konkret kluba qoşulmaq üçün rəsmi səhifəyə yaz və ya 205-ci otağa yaxınlaş.</p></div><a className="portal-button" href="/qeydiyyat">Qeydiyyat <ArrowUpRight size={17}/></a></section></main>}
+import { useState } from 'react'
+import { ArrowUpRight } from 'lucide-react'
+import { clubs, dateLabel, events, instagram, upcomingEvents, writersPlan, type PlannedEvent } from './siteContent'
+
+function EventRow({ event }: { event: PlannedEvent }) {
+  return <article className="portal-event">
+    <time dateTime={event.date}>{dateLabel(event.date)}</time>
+    <div><span className="portal-event-club">{event.club} · {event.format}</span><h3>{event.title}</h3>{event.note && <p>{event.note}</p>}</div>
+  </article>
+}
+
+export function HomePage() {
+  const next = upcomingEvents().slice(0, 3)
+  return <main className="portal-page">
+    <header className="portal-hero">
+      <span className="portal-eyebrow">Bakı Avrasiya Universiteti</span>
+      <h1>Tələbə Elmi<br />Cəmiyyəti</h1>
+      <p>TEC tələbələrin elmi tədqiqat, kitab müzakirələri, yazı və debat fəaliyyətlərini təşkil edir.</p>
+      <div className="portal-actions"><a className="portal-button" href="/qeydiyyat">Üzvlük üçün qeydiyyat <ArrowUpRight size={16}/></a><span>BAAU tələbələri üçün ödənişsizdir.</span></div>
+    </header>
+    <section className="portal-section">
+      <div className="portal-section-title"><h2>Yaxın tarixlər</h2><a href="/tedbirler">Tam plan <ArrowUpRight size={16}/></a></div>
+      <p className="portal-plan-note">2026–2027 illik planından. Saat və otaq rəsmi elanlarda dəqiqləşdiriləcək.</p>
+      <div className="portal-event-list">{next.map(event => <EventRow key={event.id} event={event}/>)}{next.length === 0 && <p>Yeni tədbir tarixi təqdim edilməyib.</p>}</div>
+    </section>
+    <section className="portal-section">
+      <div className="portal-section-title"><h2>Klublar</h2><a href="/klublar">Ətraflı <ArrowUpRight size={16}/></a></div>
+      <div className="portal-club-list">{clubs.map((club, index) => <a key={club.id} href={'/klublar#' + club.id}><span className="portal-index">0{index + 1}</span><div><h3>{club.name}</h3><p>{club.leader} · klub rəhbəri</p></div><ArrowUpRight size={18}/></a>)}</div>
+    </section>
+    <section className="portal-contact"><div><h2>Əlaqə</h2><p>B korpusu, 2-ci mərtəbə, 205-ci otaq.</p><a href={instagram} target="_blank" rel="noopener noreferrer">TEC-in rəsmi Instagram səhifəsi ↗</a></div><div><h2>TECGPT</h2><p>BAAU və TEC haqqında suallar üçün.</p><a href="/tecgpt-guest">Sual ver ↗</a></div></section>
+    <footer className="portal-footer">Bakı Avrasiya Universiteti · Tələbə Elmi Cəmiyyəti</footer>
+  </main>
+}
+
+export function EventsPage() {
+  const [filter, setFilter] = useState('Hamısı')
+  const [archive, setArchive] = useState(false)
+  const upcoming = upcomingEvents()
+  const activeIds = new Set(upcoming.map(event => event.id))
+  const list = (archive ? events.filter(event => !activeIds.has(event.id)) : upcoming).filter(event => filter === 'Hamısı' || event.club === filter)
+  return <main className="portal-page">
+    <header className="portal-page-heading"><span className="portal-eyebrow">2026–2027</span><h1>Tədbir planı</h1><p>Klubların təqdim etdiyi illik fəaliyyət cədvəli.</p></header>
+    <p className="portal-plan-note">Tarixlər dəyişə bilər. Saat, otaq və iştirak şərtləri hələ təqdim edilməyib. <a href={instagram} target="_blank" rel="noopener noreferrer">Rəsmi elanlara bax ↗</a></p>
+    <div className="portal-filters" aria-label="Kluba görə süzgəc">{['Hamısı', 'Oxucular Klubu', 'Debat Klubu'].map(value => <button key={value} aria-pressed={filter === value} onClick={() => setFilter(value)}>{value}</button>)}<button aria-pressed={archive} onClick={() => setArchive(!archive)}>{archive ? 'Yaxın tarixlər' : 'Keçmiş plan tarixləri'}</button></div>
+    <div className="portal-event-list">{list.map(event => <EventRow key={event.id} event={event}/>)}{list.length === 0 && <p>Bu seçim üzrə tədbir yoxdur.</p>}</div>
+    <section className="portal-section"><h2>Yazıçılar Klubunun aylıq planı</h2><p className="portal-plan-note">Dəqiq tarixlər ayrıca elan ediləcək.</p><div className="portal-monthly-plan">{writersPlan.map(([month, title]) => <div key={month}><span>{month}</span><strong>{title}</strong></div>)}</div><p className="portal-plan-note">Plan akademik təqvimə və təşkilati imkanlara görə dəyişə bilər. Elektron toplu imkan daxilində hazırlanacaq.</p></section>
+  </main>
+}
+
+export function ClubsPage() {
+  return <main className="portal-page">
+    <header className="portal-page-heading"><span className="portal-eyebrow">TEC</span><h1>Klublar</h1><p>Hazırda üç klub fəaliyyət göstərir.</p></header>
+    {clubs.map((club, index) => <section className="portal-club-detail" id={club.id} key={club.id}><span className="portal-index">0{index + 1}</span><div><h2>{club.name}</h2><p className="portal-leader">Rəhbər: {club.leader}</p><p>{club.description}</p><ul>{club.activities.map(activity => <li key={activity}>{activity}</li>)}</ul><a className="portal-text-link" href="/tedbirler">Fəaliyyət planı ↗</a></div></section>)}
+    <section className="portal-contact"><div><h2>Kluba qoşulmaq</h2><p>Rəsmi TEC səhifəsinə yaz və ya 205-ci otağa yaxınlaş.</p><a href={instagram} target="_blank" rel="noopener noreferrer">Instagram-da əlaqə saxla ↗</a></div><a className="portal-button" href="/qeydiyyat">TEC qeydiyyatı <ArrowUpRight size={16}/></a></section>
+  </main>
+}
