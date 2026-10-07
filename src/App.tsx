@@ -13,6 +13,7 @@ import { portal as supabase, registerMember } from './portalClient'
 import { csvCell } from './csv'
 import { TecGPTGuestPage } from './TecGPTGuestPage'
 import { PublicLayout, StructurePage } from './PublicLayout'
+import { HomePage, EventsPage, ClubsPage } from './PortalPages'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
@@ -62,8 +63,8 @@ function PublicSite({ path }: { path: string }) {
     setIntro(false)
   }
   if (intro) return <Intro onDone={finishIntro} />
-  const section = path === '/struktur' ? 'structure' : path === '/tecgpt-guest' ? 'tecgpt' : 'registration'
-  return <PublicLayout section={section}>{section === 'structure' ? <StructurePage /> : section === 'tecgpt' ? <TecGPTGuestPage /> : <MembershipPage />}</PublicLayout>
+  const section = path === '/struktur' ? 'structure' : path === '/tecgpt-guest' ? 'tecgpt' : path === '/qeydiyyat' ? 'registration' : path === '/tedbirler' ? 'events' : path === '/klublar' ? 'clubs' : 'home'
+  return <PublicLayout section={section}>{section === 'structure' ? <StructurePage /> : section === 'tecgpt' ? <TecGPTGuestPage /> : section === 'registration' ? <MembershipPage /> : section === 'events' ? <EventsPage /> : section === 'clubs' ? <ClubsPage /> : <HomePage />}</PublicLayout>
 }
 
 function formatPhone(digits: string) {

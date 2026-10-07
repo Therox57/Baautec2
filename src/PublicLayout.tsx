@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { ClipboardList, Menu, MessageCircle, Network, X } from 'lucide-react'
+import { CalendarDays, ClipboardList, Home, LibraryBig, Menu, MessageCircle, Network, X } from 'lucide-react'
 
-export function PublicLayout({ section, children }: { section: 'registration' | 'structure' | 'tecgpt'; children: ReactNode }) {
+export function PublicLayout({ section, children }: { section: 'home' | 'registration' | 'structure' | 'tecgpt' | 'events' | 'clubs'; children: ReactNode }) {
   const [open, setOpen] = useState(false)
   const toggle = useRef<HTMLButtonElement>(null)
   const panel = useRef<HTMLElement>(null)
@@ -38,7 +38,10 @@ export function PublicLayout({ section, children }: { section: 'registration' | 
       <button type="button" className="icon-btn tec-menu-close" aria-label="Menyunu bağla" onClick={closeMenu}><X size={22}/></button>
       <div className="tec-menu-brand"><img src="/baau-tec-official.png" alt=""/><div><strong>BAAU TEC</strong><span>Tələbə Elmi Cəmiyyəti</span></div></div>
       <nav aria-label="TEC bölmələri">
-        <a href="/" aria-current={section === 'registration' ? 'page' : undefined}><ClipboardList size={22}/><span>Qeydiyyat</span></a>
+        <a href="/" aria-current={section === 'home' ? 'page' : undefined}><Home size={22}/><span>Ana səhifə</span></a>
+        <a href="/tedbirler" aria-current={section === 'events' ? 'page' : undefined}><CalendarDays size={22}/><span>Tədbirlər</span></a>
+        <a href="/klublar" aria-current={section === 'clubs' ? 'page' : undefined}><LibraryBig size={22}/><span>Klublar</span></a>
+        <a href="/qeydiyyat" aria-current={section === 'registration' ? 'page' : undefined}><ClipboardList size={22}/><span>Qeydiyyat</span></a>
         <a href="/struktur" aria-current={section === 'structure' ? 'page' : undefined}><Network size={22}/><span>Struktur</span></a>
         <a href="/tecgpt-guest" aria-current={section === 'tecgpt' ? 'page' : undefined}><MessageCircle size={22}/><span>TECGPT</span></a>
       </nav>
