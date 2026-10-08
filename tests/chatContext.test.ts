@@ -93,3 +93,13 @@ test('all provided TEC answers are reachable through natural student questions',
   }
   assert.doesNotMatch(context('TEC otağı hardadır?'), /cari otaq.*məlumat yoxdur/);
 });
+
+
+test('compound TEC question retains both office and all club leaders', () => {
+  const value = context('TEC otağı haradadır və klub rəhbərləri kimlərdir?');
+  assert.match(value, /B korpusu, 2-ci mərtəbə, 205-ci otaq/);
+  for (const name of ['Zamiq Rəhmanlı', 'Röya Məmmədova', 'Məryəm Əliyeva']) {
+    assert.ok(value.includes(name), name);
+  }
+  assert.ok(value.length <= 6500);
+});

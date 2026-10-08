@@ -34,7 +34,7 @@ export function getChatKnowledge(messages: ChatMessage[]): string {
   const selected = sections.filter(s => coreTitles.has(s.title));
   let size = selected.reduce((n, s) => n + s.title.length + s.text.length + 4, 0);
   for (const { section } of ranked) {
-    if (selected.length >= coreTitles.size + 3) break;
+    if (selected.length >= coreTitles.size + 5) break;
     const length = section.title.length + section.text.length + 4;
     if (size + length > 6500) continue;
     selected.push(section); size += length;
