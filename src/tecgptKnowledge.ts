@@ -125,6 +125,131 @@ Rəhbərlik və vəzifələr zamanla dəyişə bilər.
 Cari vəziyyət üçün BAAU-nun rəsmi rəhbərlik səhifəsi əsas götürülməlidir.
 
 ==================================================
+FAKÜLTƏ DEKANLARI VƏ DEKAN MÜAVİNLƏRİ
+==================================================
+
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+Filologiya fakültəsinin dekanı — dosent Salman Süleymanov Səfəralı oğlu.
+Regionşünaslıq və iqtisadiyyat fakültəsinin dekanı — dosent Mütəllim Rəhimov Qara oğlu.
+Filologiya fakültəsinin dekan müavini — Vilayət Məmmədov.
+Regionşünaslıq və iqtisadiyyat fakültəsinin dekan müavini — Nigar Əliyeva.
+
+==================================================
+KAFEDRA MÜDİRLƏRİ
+==================================================
+
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+Xarici dil və ədəbiyyat kafedrası — Fatma Məcidova.
+İqtisadiyyat kafedrası — Vüsalə Nağıyeva.
+Nəzəri dilçilik və türk dilləri kafedrası — Zəminə Rüstəmbəyli.
+Sosial və siyasi fənlər kafedrası — Aybəniz Rüstəmova.
+Riyaziyyat və İKT kafedrası — Afət Həsənova.
+Biznes və menecment kafedrası — Mətanət Qurbanova.
+Tərcümə kafedrası — Nigar Əliyeva.
+Ümumi fənlər kafedrası — Sevil Bəhrəmova.
+
+==================================================
+DEKANLIQ OTAQLARI VƏ İŞ SAATLARI
+==================================================
+
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+Dekanlıqlar A korpusundadır. Filologiya dekanı Salman müəllim 302-ci otaqdadır.
+Regionşünaslıq və iqtisadiyyat dekanı Mütəllim müəllim A korpusunun 4-cü mərtəbəsindədir; otaq nömrəsi verilməyib.
+İş saatları 08:00–12:00 və 14:00–18:00-dır. Şikayət və təkliflər üçün tyutora müraciət etmək olar.
+
+==================================================
+AKADEMİK MƏZUNİYYƏT, BƏRPA, KÖÇÜRÜLMƏ VƏ İXTİSAS DƏYİŞMƏ
+==================================================
+
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+Tələbə əvvəlcə öz fakültəsinin dekanlığına, sonra tələb olunan prosedura uyğun Tədrisin Təşkili Departamentinə müraciət etməlidir.
+Dəqiq qaydalar, sənədlər, müddətlər və şərtlər verilməyib; bunları uydurma.
+
+==================================================
+ŞİKAYƏT, TƏKLİF, TEXNİKİ PROBLEM VƏ RƏSMİ ƏLAQƏ
+==================================================
+
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+Akademik məsələ — əvvəlcə fakültənin dekanlığı.
+Tədris və tələbə sənədləri — Tədrisin Təşkili Departamenti.
+Texniki və sistem problemi — universitetin müvafiq texniki/İT strukturu.
+Ümumi şikayət və təklif — universitet rəhbərliyi və rəsmi əlaqə kanalları.
+Universitetin əsas rəsmi əlaqə telefonu: +994 12 564 63 67. Bu TEC-in şəxsi telefon nömrəsi deyil.
+
+==================================================
+TƏHSİL HAQQI, HİSSƏLİ ÖDƏNİŞ VƏ ÖDƏNİŞ TARİXLƏRİ
+==================================================
+
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+Məlumat https://baau.edu.az saytının “Qəbul” və “Son elanlar” bölmələrində və rəsmi elanlarda dərc olunur. Əlavə məlumat üçün Qəbul Komissiyasına müraciət etmək olar.
+Konkret məbləğ, hissəli ödəniş şərti və ödəniş tarixləri verilməyib.
+
+==================================================
+TƏQAÜD VƏ TƏHSİL HAQQI GÜZƏŞTLƏRİ — 2026/2027
+==================================================
+
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+2026/2027-ci il üzrə:
+- 500 və daha yüksək bal toplayıb BAAU-nu ixtisas seçiminin ilk mərhələsində seçən tələbə I tədris ilində təhsil haqqından 100% azad edilir.
+- 400–499 bal toplayan tələbəyə I tədris ilində təhsil haqqına 30% güzəşt edilir.
+Bal güzəştlərini bütün təhsil illərinə və ya başqa qəbul ilinə şamil etmə.
+Eyni ailədən iki və ya daha çox şəxs universitetə qəbul olduqda hər birinə güzəşt tətbiq edilir və sonrakı təhsil illərinə də şamil olunur; faiz verilməyib.
+BAAU bakalavriat məzunu BAAU magistraturasına, magistr məzunu doktorantura/dissertanturaya qəbul olduqda I il üçün güzəşt nəzərdə tutulur; faiz verilməyib.
+Ərəb Araşdırmaları Mərkəzi aztəminatlı ailələrdən olan, ərəb dili üzrə Tərcümə və ya Regionşünaslıq istiqamətində təhsil alan şəxslər üçün tam təhsil haqqını əhatə edən təqaüd təqdim edir. Şərtlər: ən azı 91 akademik göstərici və ərəb dilində yazı, oxu, danışıq bacarığı; ildə 20 tələbə müsabiqə ilə seçilir.
+Müraciət tarixləri və əlavə şərtlər verilməyib. Bu cavab ayrıca internetdən yoxlanmayıb; maliyyə qərarı üçün universitetin cari rəsmi elanını və Qəbul Komissiyasını yoxlamağı tövsiyə et.
+
+==================================================
+QƏBUL VƏ TƏLƏBƏ QEYDİYYATI SƏNƏDLƏRİ
+==================================================
+
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+Sənədlər barədə BAAU məlumat kanalında məlumat var. Fakültə dekanlığı tələb olunan sənədlər və təqdimetmə vaxtı barədə əvvəlcədən məlumat verir. Nə vaxt və hara təqdim etmək lazım olduğunu dekanlıqdan öyrənmək olar.
+Konkret sənəd siyahısı və son tarix verilməyib. Bu universitet qeydiyyatıdır, TEC üzvlük forması deyil.
+Arayış, transkript və tələbə bileti almaq üçün sənədlər və proses müddəti barədə 25-ci sual cavabsızdır.
+
+==================================================
+DAVAMİYYƏT, QİYMƏTLƏNDİRMƏ, KƏSİR, İMTAHAN VƏ APELLYASİYA
+==================================================
+
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+Davamiyyət, qiymətləndirmə və imtahana buraxılma qaydaları rəsmi saytdakı “Tələbə Nizam-intizam Qaydaları” və digər akademik qaydalar əsasında müəyyən edilir.
+Fənn üzrə yekun qiymətləndirmə 51 baldan aşağı olduqda tələbə kəsilmiş hesab olunur. İmtahandan keçmək üçün imtahanın özündən də ən azı 17 bal tələb olunur; hər iki şərt nəzərə alınmalıdır.
+Kəsir olduqda təkrar imtahan və ya yay semestrindən istifadə etmək olar. Nəticə ilə razılaşmadıqda universitetin qaydasına uyğun apellyasiya müraciəti mümkündür.
+Davamiyyət faizi, kredit qaydalarının detalları, təkrar imtahan/yay semestri ödənişi və apellyasiya müddəti verilməyib.
+
+==================================================
+DƏRS VƏ İMTAHAN CƏDVƏLİ, TƏLƏBƏ PORTALI, LMS VƏ PAROL BƏRPASI
+==================================================
+
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+Dərs və imtahan cədvəli fakültədən/dekanlıqdan və universitetin elektron məlumat sistemindən əldə edilir.
+Portal/LMS giriş problemi dekanlığa bildirilməlidir. Giriş/parol üçün ilk növbədə Qeydiyyat Ofisinə / Tədrisin Təşkili Departamentinə, texniki problem üçün İT/texniki xidmətə, zərurət olduqda dekanlığa müraciət edilir.
+Portal/LMS ünvanı, akademik təqvim və parol bərpası linki verilməyib; URL uydurma.
+
+==================================================
+İDMAN, MƏDƏNİYYƏT VƏ KÖNÜLLÜLÜK FƏALİYYƏTLƏRİNƏ QOŞULMA
+==================================================
+
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+Universitetin elanlarını, TGT-nin və Karyera və Təlim Mərkəzinin tədbirlərini izləyərək qeydiyyatdan keçmək olar. Konkret qeydiyyat linki verilməyib.
+
+==================================================
+MÜBADİLƏ PROQRAMLARI VƏ BEYNƏLXALQ ƏLAQƏLƏR
+==================================================
+
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+Əlavə məlumat və müraciət üçün BAAU-nun Beynəlxalq əlaqələr və layihələrin idarəedilməsi departamentinə müraciət etmək olar.
+Cari proqram elanları, dil və akademik göstərici tələbləri, maliyyələşmə və son müraciət tarixləri verilməyib.
+
+==================================================
+PSİXOLOJİ DƏSTƏK VƏ TƏLƏBƏ DƏSTƏYİ
+==================================================
+
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+BAAU-da tələbələr üçün psixoloji dəstək imkanı mövcuddur. Tələbə tyutora, dekanlığa və ya müvafiq struktura müraciət edərək psixoloqa yönləndirilə bilər.
+Psixoloqun otağı, qəbul saatı, telefonu, ödəniş şərti və əlçatanlıq xidmətinin detalları verilməyib.
+
+==================================================
 FAKÜLTƏLƏR
 ==================================================
 
@@ -274,6 +399,9 @@ KİTABXANA VƏ İNFORMASİYA MƏRKƏZİ
 
 BAAU-nun kitabxanası 1992-ci ildən fəaliyyət göstərir.
 
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+Kitabxana 300-cü otaqdadır və 09:00–18:00 aralığında işləyir. Korpus verilməyib. Kitab götürmə və istifadə qaydaları üçün birbaşa kitabxanaya yaxınlaşmaq olar. Elektron kataloq linki verilməyib.
+
 Kitabxana və İnformasiya Mərkəzinə daxildir:
 - əsas kitabxana
 - elektron kitabxana
@@ -300,6 +428,7 @@ KARYERA VƏ TƏLİM
 ==================================================
 
 BAAU-da Karyera və Təlim / Karyera və Təcrübə fəaliyyəti mövcuddur.
+Karyera, təcrübə və iş imkanlarının müraciət prosesi barədə 40-cı sual cavabsızdır.
 
 Karyera istiqamətində tələbələrə:
 - CV hazırlama;
@@ -423,6 +552,9 @@ TƏLƏBƏ GƏNCLƏR TƏŞKİLATI — TGT
 ==================================================
 
 BAAU Tələbə Gənclər Təşkilatı 2007-ci ildən fəaliyyət göstərir.
+
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+TGT-nin rəhbəri Aysu Qədirovadır. TGT B korpusu, 6-cı mərtəbə, 605-ci otaqdadır. Əlavə məlumat üçün TGT-nin rəsmi Instagram səhifələrinə və ya otağına müraciət etmək olar. Instagram URL-i və üzvlük prosesinin detalları verilməyib.
 
 TGT-nin fəaliyyət məqsədlərinə:
 - tələbələrin ictimai fəallığının artırılması
