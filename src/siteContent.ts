@@ -6,7 +6,7 @@ export const clubs = [
 ] as const
 export type PlannedEvent = {id:string;date:string;title:string;club:string;format:string;note?:string}
 export const events:PlannedEvent[] = [
-  {id:'r1',date:'2026-10-09',title:'Martin İden — Cek London',club:'Oxucular Klubu',format:'Kitab müzakirəsi'},
+  {id:'r1',date:'2026-10-21',title:'Martin İden — Cek London',club:'Oxucular Klubu',format:'Kitab müzakirəsi'},
   {id:'d1',date:'2026-10-14',title:'Feminizm: azadlıq yoxsa ayrıseçkilik?',club:'Debat Klubu',format:'Sosial debat'},
   {id:'r2',date:'2026-10-28',title:'İçimizdəki Şeytan — Sabahattin Ali',club:'Oxucular Klubu',format:'Kitab müzakirəsi'},
   {id:'r3',date:'2026-11-11',title:'Aylak Adam — Yusuf Atılgan',club:'Oxucular Klubu',format:'Kitab müzakirəsi'},
