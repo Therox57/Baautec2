@@ -10,7 +10,7 @@ export async function requestChat(endpoint:string,messages:ClientMessage[],heade
   const controller=new AbortController();
   const cancel=()=>controller.abort();
   signal?.addEventListener('abort',cancel,{once:true});
-  const timer=setTimeout(cancel,20000);
+  const timer=setTimeout(cancel,35000);
   try{
    response=await fetchImpl(endpoint,{method:'POST',headers:{...headers,'Content-Type':'application/json','x-tecgpt-request-id':requestId},body:JSON.stringify({messages,...(localJobId?{localJobId}:{})}),signal:controller.signal});
    try{data=await response.json()}catch{throw new Error('Server cavabı oxuna bilmədi. Mesajı yenidən sına.');}
