@@ -1,3 +1,4 @@
+import { answerAvailableChat } from '../server/chatAvailability.js';
 import {isLocalPreviewConfigured, answerWithLocalPreview, localJobId, localRequestKey} from '../server/localPreview.js';
 /// <reference types="node" />
 
@@ -22,10 +23,8 @@ import {
 import { getApprovedAnswerContext, recordUnansweredQuestion } from "../server/unansweredQuestions.js";
 
 import {
-  answerConversationWithGroq,
   getNaturalFallbackForConversation,
   isGroqConfigured,
-  getChatProvider,
   resolveGroqTopic,
 } from "../server/groq.js";
 
@@ -98,44 +97,23 @@ export default async function handler(req: any, res: any) {
     // mənasını söhbət kontekstindən özü anlayır; phrase -> answer
     // cədvəli ilə idarə olunmur.
     if (isGroqConfigured()) {
-      try {
-        const provider = getChatProvider();
-        await enforceLimit(provider === 'openrouter' ? 'paid-provider-minute' : 'provider-minute', provider);
-        await enforceLimit("provider-day", provider);
-
-        const latestQuestion = messages.at(-1)!.text;
-        let approvedKnowledge = "";
-        try { approvedKnowledge = await getApprovedAnswerContext(latestQuestion); }
-        catch { console.warn("[TECGPT] Approved-answer lookup unavailable"); }
-        const groq = await answerConversationWithGroq(messages, { approvedKnowledge });
-        if (groq?.needsReview) {
-          try { await recordUnansweredQuestion(latestQuestion); }
-          catch { console.warn("[TECGPT] Unanswered-question save unavailable"); }
-        }
-
-        if (groq) {
-          return res.status(200).json({
-            reply: groq.reply,
-            model: groq.model,
-            provider,
-            rejected: groq.rejected ?? false,
-          });
-        }
-      } catch (error) {
-        if (
-          !(
-            error instanceof HttpError &&
-            (error.status === 429 ||
-              error.status === 503)
-          )
-        ) {
-          throw error;
-        }
+      const latestQuestion = messages.at(-1)!.text;
+      let approvedKnowledge = "";
+      try { approvedKnowledge = await getApprovedAnswerContext(latestQuestion); }
+      catch { console.warn("[TECGPT] Approved-answer lookup unavailable"); }
+      const answer = await answerAvailableChat(messages, {approvedKnowledge});
+      if (answer.needsReview) {
+        try { await recordUnansweredQuestion(latestQuestion); }
+        catch { console.warn("[TECGPT] Unanswered-question save unavailable"); }
       }
+      return res.status(200).json({
+        reply: answer.reply,
+        model: answer.model,
+        provider: answer.provider,
+        rejected: answer.rejected ?? false,
+      });
     }
 
-    // Provider yoxdursa / limitə düşübsə lokal yol yalnız
-    // fallback kimi işləyir.
     const localReply = getLocalReply(messages);
 
     if (localReply !== null) {
