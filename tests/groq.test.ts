@@ -1169,3 +1169,14 @@ test('OpenRouter payment/rate-limit errors and unverified knowledge fail safely'
   assert.match(result?.reply ?? '', /təsdiqlənmiş məlumat yoxdur/);
   assert.doesNotMatch(result?.reply ?? '', /301/);
 });
+
+
+test('provided club leader surname survives model dropping its final vowel', async () => {
+  const result = await answerConversationWithGroq([{role:'user',text:'TEC klub rəhbərləri kimlərdir?'}], {
+    apiKey: 'test', fetch: (async () => Response.json({choices: [{finish_reason: 'stop', message: {
+      content: JSON.stringify({scope:'baau_tec',has_verified_answer:true,reply:'Yazıçılar klubunun sədri Məryəm Əliyevdir.'}),
+    }}]})) as typeof fetch,
+  });
+  assert.match(result?.reply ?? '', /Məryəm Əliyevadır/);
+  assert.doesNotMatch(result?.reply ?? '', /Məryəm Əliyevdir/);
+});
