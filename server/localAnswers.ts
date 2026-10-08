@@ -45,7 +45,7 @@ const ANSWERS: Record<string, string> = {
 
   clubs:
     'BAAU TEC-in rəsmi mənbələrində adı çəkilən klublara Yazıçılar klubu, Debat klubu və Oxucular klubu daxildir. 😊\n\n' +
-    'Bu məlumatların bir hissəsi 2024-cü ilə aiddir. Klubların hazırkı fəaliyyəti və rəhbərləri ayrıca təsdiqlənməlidir.\n\n' +
+    'Debat Klubunun sədri Zamiq Rəhmanlı, Oxucular Klubunun sədri Röya Məmmədova, Yazıçılar Klubunun sədri Məryəm Əliyevadır.\n\n' +
     'Cari klub siyahısı üçün @baau__tec hesabına müraciət edə bilərsən.',
 
   study:
@@ -62,7 +62,7 @@ const ANSWERS: Record<string, string> = {
   library:
     'BAAU-da Kitabxana və İnformasiya Mərkəzi fəaliyyət göstərir. 📚\n\n' +
     'Mövcud imkanlara çap kitabları, elmi ədəbiyyat, elektron kitabxana, qiraət zalı, elektron resurslar, kompüter və internet imkanları daxildir.\n\n' +
-    'Kitabxana və İnformasiya Mərkəzi 2023-cü ildə yenilənib.',
+    'Kitabxana 300-cü otaqda yerləşir və 09:00–18:00 aralığında işləyir.',
 
   housing:
     'BAAU-nun “Tələbə dünyası” adlı qız tələbələr üçün yataqxanası haqqında məlumat mövcuddur.\n\n' +
@@ -102,7 +102,7 @@ const ANSWERS: Record<string, string> = {
     'Bilik bazasında Bakı Avrasiya Universitetinin cari rəsmi ünvanı belə göstərilir:\n\n' +
     'AZ-1110, Bakı şəhəri, Nərimanov rayonu, İsa Bulağı küçəsi 18.\n\n' +
     'Əvvəlki ünvan adı Akademik Həsən Əliyev küçəsi 135 A olub.\n\n' +
-    'TEC-in otağı və universitet korpuslarının cari yerləşməsi dəyişə bildiyi üçün otaq nömrəsini təsdiqlənmiş cari məlumat olmadan demirəm.\n\n' +
+    'TEC B korpusu, 2-ci mərtəbə, 205-ci otaqda yerləşir.\n\n' +
     'Rəsmi sayt: https://baau.edu.az',
 
   contact:

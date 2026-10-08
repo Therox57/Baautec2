@@ -58,3 +58,38 @@ test('retrieved answers preserve missing details and dated financial conditions'
   assert.match(followup, /302-ci otaq/);
   assert.doesNotMatch(followup, /Uydurma rəhbər/);
 });
+
+
+test('all provided TEC answers are reachable through natural student questions', () => {
+  const cases: [string, RegExp][] = [
+    ['TEC otağı hardadır?', /B korpusu, 2-ci mərtəbə, 205-ci otaq/],
+    ['TEC-lə necə əlaqə saxlayım?', /DM yaza/],
+    ['TEC ödənişlidir?', /ödənişsiz/],
+    ['TEC qeydiyyatına neçə günə cavab gəlir?', /qısa müddət/],
+    ['Qeydiyyatda səhv yazmışam nə edim?', /yenidən qeydiyyatdan/],
+    ['TEC-dən ayrılıb yenidən qoşula bilərəm?', /yenidən qoşulmaq mümkündür/],
+    ['TEC klublarının rəhbərləri kimdir?', /Zamiq Rəhmanlı/],
+    ['Oxucular Klubu nə edir?', /ayın kitabının seçilməsi/],
+    ['Yazıçılar Klubu nə edir?', /redaktəsi/],
+    ['Debat klubu nə edir?', /parlament debatları/],
+    ['Klub görüşlərinin cədvəli varmı?', /sabit cədvəli olmadığı/],
+    ['TEC-də hansı imkanlar var?', /liderlik/],
+    ['TEC-də könüllü ola bilərəm?', /ekoloji/],
+    ['TEC sertifikat necə verir?', /fərqlənən, aktiv/],
+    ['Layihəmi TEC-ə necə təqdim edim?', /TEC sədrinə/],
+    ['Elmi məqalə üçün TEC necə kömək edir?', /elmi rəhbərin müəyyənləşdirilməsi/],
+    ['Oxucular klubunun tədbir planını ver', /2027-02-10/],
+    ['Debatın tədbir planını ver', /2026-12-16/],
+    ['Martin İden nə vaxt olacaq?', /2026-10-21/],
+    ['Süni intellekt debatı nə vaxtdır?', /2027-03-24/],
+    ['21 oktyabr hansı tədbir olacaq?', /Martin İden/],
+    ['Yazıçılar klubunun fevral planı nədir?', /Hekayə necə yazılır/],
+    ['Yazıçılar klubunun fəaliyyəti necə qiymətləndirilir?', /ədəbi əsərlərin sayı/],
+  ];
+  for (const [question, expected] of cases) {
+    const value = context(question);
+    assert.match(value, expected, question);
+    assert.ok(value.length <= 6500, question);
+  }
+  assert.doesNotMatch(context('TEC otağı hardadır?'), /cari otaq.*məlumat yoxdur/);
+});
