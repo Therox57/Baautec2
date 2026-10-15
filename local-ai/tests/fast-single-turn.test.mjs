@@ -69,3 +69,22 @@ test('local replies preserve the supplied club leader surname like the cloud pat
   assert.equal(result.guardAccepted,true);assert.match(result.reply,/Məryəm Əliyevadır/);
  }finally{globalThis.fetch=original;}
 });
+
+
+test('independent review reuses the generation prefix and retains its evidence and original user request',async()=>{
+ const original=globalThis.fetch;const requests=[];
+ globalThis.fetch=async(_,init)=>{
+  const body=JSON.parse(init.body);requests.push(body);
+  return Response.json({done_reason:'stop',message:{content:JSON.stringify(requests.length===1?{intent:'TEC yeri',constraints:[],scope:'baau_tec',answer_kind:'fact',has_verified_answer:true,source_ids:['S0'],reply:'TEC B korpusu, 2-ci mərtəbə, 205-ci otaqdadır.'}:{valid:true,issues:[]})}});
+ };
+ try{
+  const result=await intelligentAnswer([{role:'user',text:'TEC-in otağı haradadır?'}],{review:true,fastSingleTurn:true});
+  assert.equal(requests.length,2);assert.equal(result.reviewed,true);assert.equal(result.guardAccepted,true);
+  const generated=requests[0],reviewed=requests[1];
+  assert.ok(reviewed.messages[0].content.startsWith(generated.messages[0].content));
+  assert.equal((reviewed.messages[0].content.match(/END VERIFIED_SOURCES/g)||[]).length,1);
+  assert.match(reviewed.messages[0].content,/UNTRUSTED DRAFT/);
+  assert.deepEqual(reviewed.messages.slice(1),generated.messages.slice(1));
+  assert.deepEqual(reviewed.format.required,['valid','issues']);
+ }finally{globalThis.fetch=original;}
+});

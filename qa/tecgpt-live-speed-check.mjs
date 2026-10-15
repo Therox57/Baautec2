@@ -1,0 +1,5 @@
+import assert from 'node:assert/strict';
+import {requestChat} from '../.test-build/src/tecgptRequest.js';
+let cookie='',metadata={},requests=0;
+const wrapped=async(url,init)=>{requests++;const response=await fetch(url,{...init,headers:{...init.headers,Origin:'https://baautec.vercel.app',...(cookie?{Cookie:cookie}:{})}});if(response.headers.get('set-cookie'))cookie=response.headers.get('set-cookie').split(';')[0];const body=await response.clone().json().catch(()=>({}));if(response.status===200)metadata=body;return response;};
+for(const name of ['first','repeat']){requests=0;const started=performance.now();const result=await requestChat('https://baautec.vercel.app/api/tecgpt-guest',[{role:'user',text:'TEC-in otağı haradadır?'}],{},()=>{},wrapped);assert.match(result.reply,/205/u);assert.equal(metadata.provider,'local-9b');assert.equal(metadata.model,'qwen3.5:9b-best');console.log(JSON.stringify({name,seconds:+((performance.now()-started)/1000).toFixed(1),reply:result.reply,provider:metadata.provider,model:metadata.model,requests}));if(name==='repeat')assert.equal(requests,1);}

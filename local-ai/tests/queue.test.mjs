@@ -48,3 +48,44 @@ test('completed result retention expires; private message bodies are not logged'
  const logs=[];const queue=createJobQueue(async()=>answer,{...options,ttlMs:10,log:(...args)=>logs.push(args)});
  try{const a=queue.request(messages);await delay(25);assert.equal(queue.request(messages,{jobId:a.body.jobId}).status,404);assert.ok(!JSON.stringify(logs).includes('Salam'));}finally{queue.close();}
 });
+
+
+test('exact single-turn public facts can bypass a busy GPU after independent review',async()=>{
+ let calls=0,release;const gate=new Promise(r=>release=r);
+ const fact={...answer,scope:'baau_tec',kind:'fact',verified:true,reviewed:true,cacheable:true,reply:'TEC B korpusu, 2-ci mərtəbə, 205-ci otaqdadır.'};
+ const queue=createJobQueue(async()=>{if(++calls===2)await gate;return fact;},{...options,capacity:1});
+ const question=[{role:'user',text:'TEC otağı haradadır?'}];
+ try{
+  queue.request(question,{requestId:'first'});await delay(10);
+  queue.request([{role:'user',text:'Klublar hansılardır?'}]);
+  const cached=queue.request(question,{requestId:'repeat'});
+  assert.equal(cached.status,200);assert.equal(cached.body.reply,fact.reply);assert.equal(cached.body.seconds,0);assert.equal(calls,2);
+  assert.equal(queue.request([{role:'user',text:'TEC otağı haradadır? Link atma.'}]).status,429);
+ }finally{release();queue.close();}
+});
+
+test('public answer reuse expires and never applies to a follow-up conversation',async()=>{
+ let clock=Date.parse('2026-10-16T08:00:00Z'),calls=0;
+ const queue=createJobQueue(async()=>{calls++;return {...answer,scope:'baau_tec',kind:'fact',verified:true,reviewed:true,cacheable:true};},{...options,cacheMs:20,now:()=>clock});
+ try{
+  queue.request(messages);await delay(5);
+  assert.equal(queue.request(messages).status,200);assert.equal(calls,1);
+  queue.request([{role:'assistant',text:'Əvvəlki mövzu'},...messages]);await delay(5);assert.equal(calls,2);
+  clock+=21;queue.request(messages);await delay(5);assert.equal(calls,3);
+  clock+=86400000;queue.request(messages);await delay(5);assert.equal(calls,4);
+ }finally{queue.close();}
+});
+
+test('refusals, unknowns, advice and unchecked drafts are never reused across requests',async()=>{
+ for(const patch of [{scope:'private_data',kind:'refusal'},{scope:'out_of_scope',kind:'refusal'},{kind:'unknown'},{kind:'advice'},{reviewed:false},{verified:false},{cacheable:false}]){
+  let calls=0;const queue=createJobQueue(async()=>{calls++;return {...answer,scope:'baau_tec',kind:'fact',verified:true,reviewed:true,cacheable:true,...patch};},options);
+  try{queue.request(messages);await delay(5);assert.equal(queue.request(messages).status,202);await delay(5);assert.equal(calls,2);}finally{queue.close();}
+ }
+});
+
+
+test('Baku midnight invalidates an otherwise unexpired public answer',async()=>{
+ let clock=Date.parse('2026-10-16T23:59:59+04:00'),calls=0;
+ const queue=createJobQueue(async()=>{calls++;return {...answer,scope:'baau_tec',kind:'fact',verified:true,reviewed:true,cacheable:true};},{...options,cacheMs:5000,now:()=>clock});
+ try{queue.request(messages);await delay(5);assert.equal(queue.request(messages).status,200);clock+=2000;assert.equal(queue.request(messages).status,202);await delay(5);assert.equal(calls,2);}finally{queue.close();}
+});

@@ -1,0 +1,4 @@
+import {intelligentAnswer} from '../local-ai/intelligence.mjs';
+const original=globalThis.fetch;let calls=[];
+globalThis.fetch=async(...args)=>{const start=performance.now();const r=await original(...args);if(String(args[0]).includes('11434')){const d=await r.clone().json();calls.push({seconds:+((performance.now()-start)/1000).toFixed(1),promptTokens:d.prompt_eval_count,promptSeconds:+(d.prompt_eval_duration/1e9).toFixed(1),outputTokens:d.eval_count,outputSeconds:+(d.eval_duration/1e9).toFixed(1)});}return r;};
+for(const text of ['TEC-in otağı haradadır?','TEC-in klubları və sədrləri kimlərdir?','TEC-ə qoşulmaq istəyirəm, amma qeydiyyatı izah etmə, link atma. Nə öyrənə bilərəm?']) {calls=[];const r=await intelligentAnswer([{role:'user',text}],{review:true,fastSingleTurn:true,diagnostics:true}); console.log(JSON.stringify({question:text,reply:r.reply,seconds:r.seconds,guardAccepted:r.guardAccepted,review:r.diagnostics.qualityCheck,calls}));}
