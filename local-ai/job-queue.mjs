@@ -19,7 +19,7 @@ export function createJobQueue(answer,{capacity=3,runMs=90000,leaseMs=45000,ttlM
   active=job;job.state='running';log('[TECGPT queue]',{id:job.id.slice(0,8),state:'running'});
   const timer=setTimeout(()=>job.controller.abort(),runMs);
   try{
-   const result=await answer(job.messages,{review:true,signal:job.controller.signal});
+   const result=await answer(job.messages,{review:true,fastSingleTurn:true,signal:job.controller.signal});
    job.controller.signal.throwIfAborted();
    if(!result.guardAccepted)throw Error('guard-rejected');
    job.result={reply:result.reply,model:result.model,provider:'local-9b',scope:result.scope,kind:result.kind,guardAccepted:result.guardAccepted,rejected:['out_of_scope','private_data'].includes(result.scope),needsReview:result.kind==='unknown',reviewed:result.reviewed,seconds:result.seconds};

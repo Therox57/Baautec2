@@ -103,3 +103,35 @@ test('compound TEC question retains both office and all club leaders', () => {
   }
   assert.ok(value.length <= 6500);
 });
+
+
+test('semantic source exclusions survive earlier registration context without discarding TEC facts', () => {
+ const messages=[{role:'user' as const,text:'TEC-ə necə üzv olum?'}];
+ assert.match(getChatKnowledge(messages), /BAAU TEC ÜZVLÜK QEYDİYYATI/);
+ const filtered=getChatKnowledge(messages,{excludedTopics:['registration','tgt']});
+ assert.doesNotMatch(filtered,/BAAU TEC ÜZVLÜK QEYDİYYATI/);
+ assert.doesNotMatch(filtered,/TƏLƏBƏ GƏNCLƏR TƏŞKİLATI — TGT/);
+ assert.match(filtered,/BAAU TƏLƏBƏ ELMİ CƏMİYYƏTİ — TEC/);
+ assert.ok(filtered.length<=6500);
+});
+
+
+test('local focused context removes unrelated membership/TGT but preserves membership and compound office facts', () => {
+ const office=getChatKnowledge([{role:'user',text:'TEC otağı hardadır və klub rəhbərləri kimdir?'}],{compactCore:true});
+ assert.match(office,/205-ci otaq/);
+ assert.match(office,/Məryəm Əliyeva/);
+ assert.doesNotMatch(office,/BAAU TEC ÜZVLÜK QEYDİYYATI|TƏLƏBƏ GƏNCLƏR TƏŞKİLATI — TGT/);
+ const membership=getChatKnowledge([{role:'user',text:'TEC-dən ayrılıb yenidən qoşula bilərəm?'}],{compactCore:true});
+ assert.match(membership,/yenidən qoşulmaq mümkündür/);
+ const tgt=getChatKnowledge([{role:'user',text:'TGT sədri kimdir?'}],{compactCore:true});
+ assert.match(tgt,/Aysu Qədirova/);
+});
+
+
+test('local context is bounded without common university/planner words pulling in unrelated documents', () => {
+ const messages=[{role:'user' as const,text:'BAAU universitetinin hazırkı rektorunun kim olduğunu soruşur'}];
+ const value=getChatKnowledge(messages,{compactCore:true});
+ assert.match(value,/Səyavuş Kamran oğlu Qasımov/);
+ assert.ok(value.length<=4500);
+ assert.doesNotMatch(value,/YAZIÇILAR KLUBU — 1.KLUBUN ƏSAS MƏQSƏDİ/);
+});

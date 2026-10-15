@@ -16,3 +16,15 @@ export function keepRequestedLength(text,question,kind){
  if(/(?:yalniz|tekce|ancaq)?\s*bir addim|birinci addim/.test(q))return text.split(/(?<=[.!?])\s+/u)[0].replace(/(seç|bax|yoxla|soruş|araşdır)\s+və[^.!?]*/u,'$1');
  return text;
 }
+
+
+// Source omissions cannot support invented publication promises about room/time/contact details.
+export function removeUnsupportedPublicationClaims(reply, knowledge) {
+ if (!/(?:verilməyib|göstərilməyib|təqdim edilməyib)/iu.test(knowledge)) return reply;
+ const publication=/(?:rəsmi|veb-sayt|sayt|elan)[^.!?]*(?:dərc|açıqlan|paylaş|göstəril|veril|yerləşdir|mövcud|yoxdur)/iu;
+ const details=/(?:saat|auditoriya|ota[qğ]|əlaqə detal|qəbul vaxt)/iu;
+ const unpublished=/(?:rəsmi (?:mənbələrdə|səhifələrdə)|elanlarda|hələ)[^.!?]*(?:açıqlanmayıb|dərc edilməyib|elan edilməyib|göstərilməyib|yoxdur)/iu;
+ return reply.split(/(?<=[.!?])\s+/u).filter(sentence =>
+  !(details.test(sentence) && (publication.test(sentence) || unpublished.test(sentence)) && !knowledge.includes(sentence))
+ ).join(' ').trim();
+}
