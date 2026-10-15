@@ -33,6 +33,7 @@ TECGPT Bakı Avrasiya Universiteti (BAAU) və BAAU Tələbə Elmi Cəmiyyəti (T
 18. TEC haqqında suallarda ilk növbədə BAAU TEC məlumatlarından istifadə et.
 19. Universitet haqqında suallarda BAAU-nun rəsmi məlumatlarından istifadə et.
 20. Cavabı bilmirsənsə məlumat uydurmaq əvəzinə bunu de.
+
 `;
 export const TECGPT_KNOWLEDGE = `
 ==================================================
@@ -122,6 +123,131 @@ və digər inzibati vahidlər daxildir.
 
 Rəhbərlik və vəzifələr zamanla dəyişə bilər.
 Cari vəziyyət üçün BAAU-nun rəsmi rəhbərlik səhifəsi əsas götürülməlidir.
+
+==================================================
+FAKÜLTƏ DEKANLARI VƏ DEKAN MÜAVİNLƏRİ
+==================================================
+
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+Filologiya fakültəsinin dekanı — dosent Salman Süleymanov Səfəralı oğlu.
+Regionşünaslıq və iqtisadiyyat fakültəsinin dekanı — dosent Mütəllim Rəhimov Qara oğlu.
+Filologiya fakültəsinin dekan müavini — Vilayət Məmmədov.
+Regionşünaslıq və iqtisadiyyat fakültəsinin dekan müavini — Nigar Əliyeva.
+
+==================================================
+KAFEDRA MÜDİRLƏRİ
+==================================================
+
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+Xarici dil və ədəbiyyat kafedrası — Fatma Məcidova.
+İqtisadiyyat kafedrası — Vüsalə Nağıyeva.
+Nəzəri dilçilik və türk dilləri kafedrası — Zəminə Rüstəmbəyli.
+Sosial və siyasi fənlər kafedrası — Aybəniz Rüstəmova.
+Riyaziyyat və İKT kafedrası — Afət Həsənova.
+Biznes və menecment kafedrası — Mətanət Qurbanova.
+Tərcümə kafedrası — Nigar Əliyeva.
+Ümumi fənlər kafedrası — Sevil Bəhrəmova.
+
+==================================================
+DEKANLIQ OTAQLARI VƏ İŞ SAATLARI
+==================================================
+
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+Dekanlıqlar A korpusundadır. Filologiya dekanı Salman müəllim 302-ci otaqdadır.
+Regionşünaslıq və iqtisadiyyat dekanı Mütəllim müəllim A korpusunun 4-cü mərtəbəsindədir; otaq nömrəsi verilməyib.
+İş saatları 08:00–12:00 və 14:00–18:00-dır. Şikayət və təkliflər üçün tyutora müraciət etmək olar.
+
+==================================================
+AKADEMİK MƏZUNİYYƏT, BƏRPA, KÖÇÜRÜLMƏ VƏ İXTİSAS DƏYİŞMƏ
+==================================================
+
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+Tələbə əvvəlcə öz fakültəsinin dekanlığına, sonra tələb olunan prosedura uyğun Tədrisin Təşkili Departamentinə müraciət etməlidir.
+Dəqiq qaydalar, sənədlər, müddətlər və şərtlər verilməyib; bunları uydurma.
+
+==================================================
+ŞİKAYƏT, TƏKLİF, TEXNİKİ PROBLEM VƏ RƏSMİ ƏLAQƏ
+==================================================
+
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+Akademik məsələ — əvvəlcə fakültənin dekanlığı.
+Tədris və tələbə sənədləri — Tədrisin Təşkili Departamenti.
+Texniki və sistem problemi — universitetin müvafiq texniki/İT strukturu.
+Ümumi şikayət və təklif — universitet rəhbərliyi və rəsmi əlaqə kanalları.
+Universitetin əsas rəsmi əlaqə telefonu: +994 12 564 63 67. Bu TEC-in şəxsi telefon nömrəsi deyil.
+
+==================================================
+TƏHSİL HAQQI, HİSSƏLİ ÖDƏNİŞ VƏ ÖDƏNİŞ TARİXLƏRİ
+==================================================
+
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+Məlumat https://baau.edu.az saytının “Qəbul” və “Son elanlar” bölmələrində və rəsmi elanlarda dərc olunur. Əlavə məlumat üçün Qəbul Komissiyasına müraciət etmək olar.
+Konkret məbləğ, hissəli ödəniş şərti və ödəniş tarixləri verilməyib.
+
+==================================================
+TƏQAÜD VƏ TƏHSİL HAQQI GÜZƏŞTLƏRİ — 2026/2027
+==================================================
+
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+2026/2027-ci il üzrə:
+- 500 və daha yüksək bal toplayıb BAAU-nu ixtisas seçiminin ilk mərhələsində seçən tələbə I tədris ilində təhsil haqqından 100% azad edilir.
+- 400–499 bal toplayan tələbəyə I tədris ilində təhsil haqqına 30% güzəşt edilir.
+Bal güzəştlərini bütün təhsil illərinə və ya başqa qəbul ilinə şamil etmə.
+Eyni ailədən iki və ya daha çox şəxs universitetə qəbul olduqda hər birinə güzəşt tətbiq edilir və sonrakı təhsil illərinə də şamil olunur; faiz verilməyib.
+BAAU bakalavriat məzunu BAAU magistraturasına, magistr məzunu doktorantura/dissertanturaya qəbul olduqda I il üçün güzəşt nəzərdə tutulur; faiz verilməyib.
+Ərəb Araşdırmaları Mərkəzi aztəminatlı ailələrdən olan, ərəb dili üzrə Tərcümə və ya Regionşünaslıq istiqamətində təhsil alan şəxslər üçün tam təhsil haqqını əhatə edən təqaüd təqdim edir. Şərtlər: ən azı 91 akademik göstərici və ərəb dilində yazı, oxu, danışıq bacarığı; ildə 20 tələbə müsabiqə ilə seçilir.
+Müraciət tarixləri və əlavə şərtlər verilməyib. Bu cavab ayrıca internetdən yoxlanmayıb; maliyyə qərarı üçün universitetin cari rəsmi elanını və Qəbul Komissiyasını yoxlamağı tövsiyə et.
+
+==================================================
+QƏBUL VƏ TƏLƏBƏ QEYDİYYATI SƏNƏDLƏRİ
+==================================================
+
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+Sənədlər barədə BAAU məlumat kanalında məlumat var. Fakültə dekanlığı tələb olunan sənədlər və təqdimetmə vaxtı barədə əvvəlcədən məlumat verir. Nə vaxt və hara təqdim etmək lazım olduğunu dekanlıqdan öyrənmək olar.
+Konkret sənəd siyahısı və son tarix verilməyib. Bu universitet qeydiyyatıdır, TEC üzvlük forması deyil.
+Arayış, transkript və tələbə bileti almaq üçün sənədlər və proses müddəti barədə 25-ci sual cavabsızdır.
+
+==================================================
+DAVAMİYYƏT, QİYMƏTLƏNDİRMƏ, KƏSİR, İMTAHAN VƏ APELLYASİYA
+==================================================
+
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+Davamiyyət, qiymətləndirmə və imtahana buraxılma qaydaları rəsmi saytdakı “Tələbə Nizam-intizam Qaydaları” və digər akademik qaydalar əsasında müəyyən edilir.
+Fənn üzrə yekun qiymətləndirmə 51 baldan aşağı olduqda tələbə kəsilmiş hesab olunur. İmtahandan keçmək üçün imtahanın özündən də ən azı 17 bal tələb olunur; hər iki şərt nəzərə alınmalıdır.
+Kəsir olduqda təkrar imtahan və ya yay semestrindən istifadə etmək olar. Nəticə ilə razılaşmadıqda universitetin qaydasına uyğun apellyasiya müraciəti mümkündür.
+Davamiyyət faizi, kredit qaydalarının detalları, təkrar imtahan/yay semestri ödənişi və apellyasiya müddəti verilməyib.
+
+==================================================
+DƏRS VƏ İMTAHAN CƏDVƏLİ, TƏLƏBƏ PORTALI, LMS VƏ PAROL BƏRPASI
+==================================================
+
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+Dərs və imtahan cədvəli fakültədən/dekanlıqdan və universitetin elektron məlumat sistemindən əldə edilir.
+Portal/LMS giriş problemi dekanlığa bildirilməlidir. Giriş/parol üçün ilk növbədə Qeydiyyat Ofisinə / Tədrisin Təşkili Departamentinə, texniki problem üçün İT/texniki xidmətə, zərurət olduqda dekanlığa müraciət edilir.
+Portal/LMS ünvanı, akademik təqvim və parol bərpası linki verilməyib; URL uydurma.
+
+==================================================
+İDMAN, MƏDƏNİYYƏT VƏ KÖNÜLLÜLÜK FƏALİYYƏTLƏRİNƏ QOŞULMA
+==================================================
+
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+Universitetin elanlarını, TGT-nin və Karyera və Təlim Mərkəzinin tədbirlərini izləyərək qeydiyyatdan keçmək olar. Konkret qeydiyyat linki verilməyib.
+
+==================================================
+MÜBADİLƏ PROQRAMLARI VƏ BEYNƏLXALQ ƏLAQƏLƏR
+==================================================
+
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+Əlavə məlumat və müraciət üçün BAAU-nun Beynəlxalq əlaqələr və layihələrin idarəedilməsi departamentinə müraciət etmək olar.
+Cari proqram elanları, dil və akademik göstərici tələbləri, maliyyələşmə və son müraciət tarixləri verilməyib.
+
+==================================================
+PSİXOLOJİ DƏSTƏK VƏ TƏLƏBƏ DƏSTƏYİ
+==================================================
+
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+BAAU-da tələbələr üçün psixoloji dəstək imkanı mövcuddur. Tələbə tyutora, dekanlığa və ya müvafiq struktura müraciət edərək psixoloqa yönləndirilə bilər.
+Psixoloqun otağı, qəbul saatı, telefonu, ödəniş şərti və əlçatanlıq xidmətinin detalları verilməyib.
 
 ==================================================
 FAKÜLTƏLƏR
@@ -273,6 +399,9 @@ KİTABXANA VƏ İNFORMASİYA MƏRKƏZİ
 
 BAAU-nun kitabxanası 1992-ci ildən fəaliyyət göstərir.
 
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+Kitabxana 300-cü otaqdadır və 09:00–18:00 aralığında işləyir. Korpus verilməyib. Kitab götürmə və istifadə qaydaları üçün birbaşa kitabxanaya yaxınlaşmaq olar. Elektron kataloq linki verilməyib.
+
 Kitabxana və İnformasiya Mərkəzinə daxildir:
 - əsas kitabxana
 - elektron kitabxana
@@ -299,6 +428,7 @@ KARYERA VƏ TƏLİM
 ==================================================
 
 BAAU-da Karyera və Təlim / Karyera və Təcrübə fəaliyyəti mövcuddur.
+Karyera, təcrübə və iş imkanlarının müraciət prosesi barədə 40-cı sual cavabsızdır.
 
 Karyera istiqamətində tələbələrə:
 - CV hazırlama;
@@ -423,6 +553,9 @@ TƏLƏBƏ GƏNCLƏR TƏŞKİLATI — TGT
 
 BAAU Tələbə Gənclər Təşkilatı 2007-ci ildən fəaliyyət göstərir.
 
+Mənbə: sayt sahibinin 8 oktyabr 2026-cı ildə təqdim etdiyi cavablar.
+TGT-nin rəhbəri Aysu Qədirovadır. TGT B korpusu, 6-cı mərtəbə, 605-ci otaqdadır. Əlavə məlumat üçün TGT-nin rəsmi Instagram səhifələrinə və ya otağına müraciət etmək olar. Instagram URL-i və üzvlük prosesinin detalları verilməyib.
+
 TGT-nin fəaliyyət məqsədlərinə:
 - tələbələrin ictimai fəallığının artırılması
 - könüllülük
@@ -508,61 +641,36 @@ yeni məlumat daha aktual hesab edilə bilər.
 TEC KLUBLARI — YOXLANMIŞ MƏLUMAT
 ==================================================
 
-TEC və TGT ayrı təşkilatlardır. Universitetdəki bütün klubları
-avtomatik olaraq TEC-ə aid etmə.
-
-BAAU-nun rəsmi xəbərlərində TEC-in nəzdində göstərilən klublar:
-
-- Yazıçılar klubu — 19 dekabr 2024-cü il tarixli xəbər.
-  https://baau.edu.az/az/article/baau-da-poeziya-gunu-tedbiri-bas-tutub-417
-
-- Debat klubu — 14 dekabr 2024-cü il tarixli xəbər.
-  https://baau.edu.az/az/article/baau-da-gender-beraberliyi-movzusunda-debat-gorusu-kecirilib-412
-
-- Oxucular klubu — BAAU TEC-in rəsmi Instagram profilində
-  "TEC Oxucular" adlı seçilmiş hekayə kimi göstərilir.
-  https://www.instagram.com/baau__tec/
-  Klubun hazırkı aktivliyi və rəhbəri ayrıca təsdiq tələb edir.
-
-Aktyorluq klubu 4 fevral 2024-cü il tarixli rəsmi xəbərdə
-TGT-nin nəzdində göstərilib. Onu TEC klubu kimi təqdim etmə.
-https://baau.edu.az/az/article/baki-avrasiya-universitetinin-telebe-gencler-teskilati-ilin-telebe-gencler-teskilati-secilib-204
-
-Əvvəlki 10 klubluq siyahının bütövlükdə TEC-ə aid olması
-və hazırda aktual qalması təsdiqlənməyib.
-
-Yuxarıdakı xəbərlər 2024-cü ilə aiddir. Klubların hazırda
-fəaliyyət göstərdiyini və ya cari rəhbərlərinin kim olduğunu
-təsdiq olmadan iddia etmə.
-
-Cari və tam klub siyahısı soruşularsa, BAAU TEC idarə
-heyətinin son təsdiqlənmiş məlumatına yönləndir.
+Mənbə: sayt sahibinin təqdim etdiyi Şərafətin cavabları və plan şəkilləri; 8 oktyabr 2026-cı ildə daxil edilib.
+TEC-in nəzdində 3 aktiv klub var: Debat Klubu — sədri Zamiq Rəhmanlı; Oxucular Klubu — sədri Röya Məmmədova; Yazıçılar Klubu — sədri Məryəm Əliyeva.
+TEC və TGT ayrı təşkilatlardır. Universitetdəki bütün klubları TEC-ə aid etmə.
+Aktyorluq klubu 2024-cü il rəsmi xəbərində TGT-yə aiddir, TEC klubu deyil.
+Ayrıca kluba qoşulma şərtləri verilməyib; TEC-ə müraciət etmək olar.
+https://www.instagram.com/baau__tec/
 
 ==================================================
-BAAU TEC YERLƏŞMƏ
+BAAU TEC YERLƏŞMƏ, OTAĞI VƏ ƏLAQƏ
 ==================================================
 
-BAAU TEC-in cari otaq və korpus yerləşməsi barədə
-yenilənmiş təsdiqlənmiş məlumat yoxdur.
-
-Köhnə məlumatlarda 2-ci mərtəbə, 205-ci otaq göstərilə bilər,
-amma bunu cari yerləşmə kimi təqdim etmə.
+Mənbə: sayt sahibinin təqdim etdiyi Şərafətin cavabları və plan şəkilləri; 8 oktyabr 2026-cı ildə daxil edilib.
+TEC BAAU-nun B korpusu, 2-ci mərtəbə, 205-ci otaqda yerləşir.
+Tələbə rəsmi Instagram səhifəsinə DM yaza və ya 205-ci otağa yaxınlaşa bilər.
+https://www.instagram.com/baau__tec/
+Qəbul/iş saatları barədə 4-cü sual çıxarılıb; saat uydurma.
 
 ==================================================
 BAAU TEC ÜZVLÜK QEYDİYYATI
 ==================================================
 
-BAAU TEC üçün xüsusi onlayn üzvlük qeydiyyatı hazırlanıb.
-
-Qeydiyyat ünvanı:
-https://baautec.vercel.app
-
-Qeydiyyatda tələbədən müxtəlif məlumatlar istənilə bilər.
-
-TECGPT tələbələrin həmin qeydiyyat məlumatlarını görə bilməz.
-
-TECGPT istifadəçiyə qeydiyyat keçidini verə bilər,
-amma qeydiyyat bazasındakı şəxsləri axtara bilməz.
+Mənbə: sayt sahibinin təqdim etdiyi Şərafətin cavabları və plan şəkilləri; 8 oktyabr 2026-cı ildə daxil edilib.
+BAAU-da təhsil alan bütün tələbələr TEC-ə qoşula bilər. Üzvlük tamamilə ödənişsizdir.
+BAAU TEC-in rəsmi Instagram bio-sundakı linkdən qeydiyyatdan keçmək kifayətdir.
+Saytın qeydiyyat bölməsi: https://baautec.vercel.app/qeydiyyat
+Qeydiyyatdan sonra qısa müddət ərzində TEC-in daxili qruplarına əlavə edilirsiniz. Dəqiq neçə gün olduğu verilməyib.
+Səhv məlumat yazan və ya cavab almayan tələbə yenidən qeydiyyatdan keçməli və ya TEC otağına yaxınlaşmalıdır.
+Üzvlükdən ayrılmaq və sonra yenidən qoşulmaq mümkündür.
+8 və 11-ci suallar çıxarılıb; əlavə mərhələ, müsahibə, sənəd, hüquq/öhdəlik və aktivlik tələbi uydurma.
+TECGPT qeydiyyat bazasındakı şəxsləri və onların müraciət statusunu görə bilməz.
 
 ==================================================
 BAAU TEC SOSİAL MEDİA
@@ -682,4 +790,80 @@ Məlumat bazada yoxdursa və onun doğru olduğuna əmin deyilsənsə:
 UYDURMA.
 
 İstifadəçiyə bunun təsdiqlənmiş məlumat olmadığını bildir.
+==================================================
+TEC ELMİ, SOSİAL VƏ MƏDƏNİ FƏALİYYƏTLƏRİ
+==================================================
+
+Mənbə: sayt sahibinin təqdim etdiyi Şərafətin cavabları və plan şəkilləri; 8 oktyabr 2026-cı ildə daxil edilib.
+Elmi konfrans və seminarlar; tələbə elmi məqalələrinin hazırlanması və təqdimatı; elmi layihə və tədqiqat müsabiqələri; debat və intellektual müzakirələr; professor və alimlərlə görüşlər; elmi-tədqiqat metodologiyası təlimləri; kitab müzakirələri və elmi mütaliə klubları; universitetlərarası elmi yarışlar; tələbə tədqiqatlarının sərgisi; gənc tədqiqatçı layihələri. Konkret paylaşım linkləri verilməyib; rəsmi Instagram hesabında elanlar izlənilə bilər.
+
+==================================================
+OXUCULAR KLUBUNUN MƏQSƏDİ VƏ FƏALİYYƏTLƏRİ
+==================================================
+
+Mənbə: sayt sahibinin təqdim etdiyi Şərafətin cavabları və plan şəkilləri; 8 oktyabr 2026-cı ildə daxil edilib.
+Məqsədi tələbələr arasında mütaliə mədəniyyətini inkişaf etdirmək və kitab oxumağa marağı artırmaqdır. Fəaliyyətlər: kitab müzakirələri və mütaliə görüşləri; ayın kitabının seçilməsi; kitab təqdimatları; yazıçı və ədəbiyyat nümayəndələri ilə görüşlər; kitab tövsiyələrinin paylaşılması; ədəbi viktorinalar və intellektual oyunlar; kitab sərgiləri və kitab mübadiləsi; müxtəlif mövzularda mütaliə siyahılarının hazırlanması. Rəhbər Röya Məmmədovadır. Ayrı klub qeydiyyatı şərtləri verilməyib.
+
+==================================================
+YAZIÇILAR KLUBUNUN MƏQSƏDİ VƏ FƏALİYYƏTLƏRİ
+==================================================
+
+Mənbə: sayt sahibinin təqdim etdiyi Şərafətin cavabları və plan şəkilləri; 8 oktyabr 2026-cı ildə daxil edilib.
+Məqsədi tələbələrin yaradıcılıq qabiliyyətlərini üzə çıxarmaq və gənc yazarları dəstəkləməkdir. Fəaliyyətlər: şeir, hekayə, esse və məqalə yazmaq; tələbə əsərlərinin müzakirəsi və redaktəsi; yaradıcılıq müsabiqələri; ədəbi gecələr; tələbə yazılarının toplu və jurnal şəklində nəşri; yazı texnikası təlimləri; gənc yazarlarla görüşlər; universitetin tələbə ədəbiyyatı platformasının yaradılması. Rəhbər Məryəm Əliyevadır. Nəşr və platforma fəaliyyət istiqamətidir, artıq yaradılmış məhsul kimi təqdim etmə.
+
+==================================================
+DEBAT KLUBUNUN MƏQSƏDİ VƏ FƏALİYYƏTLƏRİ
+==================================================
+
+Mənbə: sayt sahibinin təqdim etdiyi Şərafətin cavabları və plan şəkilləri; 8 oktyabr 2026-cı ildə daxil edilib.
+Məqsədi tələbələrin məntiqi düşünmə, arqumentasiya, natiqlik və tənqidi düşünmə bacarıqlarını inkişaf etdirməkdir. Fəaliyyətlər: aktual mövzularda debatlar; parlament debatları; açıq diskussiyalar; debat turnirləri və çempionatlar; debat və natiqlik təlimləri; sosial, siyasi, iqtisadi və mədəni məsələlərin müzakirəsi; universitetlərarası debat yarışları; debatçıların hazırlanması və komanda formalaşdırılması. Rəhbər Zamiq Rəhmanlıdır.
+
+==================================================
+TEC KLUB GÖRÜŞLƏRİNİN VAXTI, MƏKANI VƏ CƏDVƏLİ
+==================================================
+
+Mənbə: sayt sahibinin təqdim etdiyi Şərafətin cavabları və plan şəkilləri; 8 oktyabr 2026-cı ildə daxil edilib.
+16-cı cavabda hər klubun ayda bir dəfə universitetdə auditoriyalardan birində müzakirə keçirdiyi və sabit cədvəli olmadığı yazılıb. Ayrıca verilən 2026/2027 illik Oxucular və Debat planlarında konkret tarixlər var; konkret tədbir barədə həmin illik planı əsas götür. Bütün klublar üçün dəyişməz aylıq cədvəl olduğunu iddia etmə. Oxucular planında məkan BAAU-dur. Dəqiq saat, auditoriya və tədbir qeydiyyat linkləri verilməyib. 205-ci TEC otağını tədbir auditoriyası kimi təqdim etmə. Plan tarixləri yenilənmiş elanlara görə dəyişə bilər.
+
+==================================================
+TEC ÜZVÜNÜN ELMİ VƏ ŞƏXSİ İNKİŞAF İMKANLARI
+==================================================
+
+Mənbə: sayt sahibinin təqdim etdiyi Şərafətin cavabları və plan şəkilləri; 8 oktyabr 2026-cı ildə daxil edilib.
+Elmi imkanlar: məqalə və tədqiqat hazırlamaq; konfrans və seminarlarda iştirak; tədqiqat layihələrində komanda üzvü olmaq; professor və tədqiqatçılarla görüşlər; elmi müsabiqələr; öz elmi layihəsini təqdim etmək. Şəxsi inkişaf: liderlik, komanda ilə işləmək, natiqlik və təqdimat, tənqidi və analitik düşüncə, vaxt və layihə idarəetməsi bacarıqları. Oxucular, Yazıçılar və Debat klublarında maraq dairəsinə uyğun fəaliyyət mümkündür; gələcəkdə yaradılacaq klublar cari aktiv klub siyahısına daxil deyil. Bunlar iştirak və inkişaf imkanlarıdır; avtomatik nəticə, vəzifə və mükafat zəmanəti deyil.
+
+==================================================
+TEC LAYİHƏ VƏ KÖNÜLLÜLÜK İMKANLARI
+==================================================
+
+Mənbə: sayt sahibinin təqdim etdiyi Şərafətin cavabları və plan şəkilləri; 8 oktyabr 2026-cı ildə daxil edilib.
+Öz layihəsini TEC-ə təqdim etmək; layihə rəhbəri və ya koordinator olmaq; sosial, elmi və mədəni layihələr yaratmaq; universitetdə tədbirlər təşkil etmək; digər universitetlərlə birgə layihələrdə iştirak. Könüllülük: sosial və xeyriyyə aksiyaları, ekoloji layihələr, universitet tədbirlərində könüllü olmaq, müxtəlif təşkilatlarla birgə layihələr. Bunlar fəaliyyət imkanlarıdır; hər üzvə rəhbər vəzifə avtomatik verilmir.
+
+==================================================
+TEC SERTİFİKAT VƏ PORTFOLİO ŞƏRTLƏRİ
+==================================================
+
+Mənbə: sayt sahibinin təqdim etdiyi Şərafətin cavabları və plan şəkilləri; 8 oktyabr 2026-cı ildə daxil edilib.
+Fəaliyyətindən asılı olaraq tələbə iştirak, könüllülük, təlim, layihə və təşkilati fəaliyyət üzrə sertifikat əldə edə bilər. Sertifikat fərqlənən, aktiv tələbələrə verilir. CV və gələcək müraciətlərdə istifadə oluna bilər. Bütün üzvlərə və bütün tədbirlərdə sertifikat veriləcəyini vəd etmə. Aktivlik meyarı, davamiyyət faizi, verilmə vaxtı və müraciət forması verilməyib.
+
+==================================================
+TEC-Ə LAYİHƏ, TƏDBİR TƏKLİFİ VƏ YENİ KLUB İDEYASI TƏQDİM ETMƏ
+==================================================
+
+Mənbə: sayt sahibinin təqdim etdiyi Şərafətin cavabları və plan şəkilləri; 8 oktyabr 2026-cı ildə daxil edilib.
+Tələbə layihəni hazırlayıb TEC sədrinə təqdim edir. Sədr lazımi şöbələrə təqdim edir; bəyənilsə həyata keçirmək üçün hərəkətə keçilir. Yeni klub ideyası və tədbir təklifi üçün ayrıca şərtlər və forma verilməyib; TEC-lə əlaqə saxlamaq olar. Təklifin mütləq qəbul olunacağını vəd etmə.
+
+==================================================
+TEC ELMİ MƏQALƏ, TƏDQİQAT VƏ KONFRANS DƏSTƏYİ
+==================================================
+
+Mənbə: sayt sahibinin təqdim etdiyi Şərafətin cavabları və plan şəkilləri; 8 oktyabr 2026-cı ildə daxil edilib.
+TEC tələbələrin elmi-tədqiqat fəaliyyətinə cəlb olunmasına və elmi tədbirlərdə iştirakına dəstək göstərir. Universitet kafedralarında tədqiqat, seminar, simpozium və konfrans təşkili üzrə fəaliyyət aparılır. Tələbə əvvəlcə TEC və ya fakültəsinin/kafedrasının məsul şəxsi ilə əlaqə saxlayaraq məqalə/tədqiqat mövzusu, elmi rəhbərin müəyyənləşdirilməsi, məqalə/tezisin hazırlanması, konfransa təqdimetmə qaydaları və son tarixlər barədə məlumat ala bilər. Konkret elmi rəhbər, tarix və maliyyələşmə zəmanəti verilməyib.
+
+==================================================
+TEC MƏLUMATLARINDA CAVABSIZ VƏ ÇIXARILMIŞ SUALLAR
+==================================================
+
+Mənbə: sayt sahibinin təqdim etdiyi Şərafətin cavabları və plan şəkilləri; 8 oktyabr 2026-cı ildə daxil edilib.
+1–2: TEC sədr müavini, idarə heyətinin tam siyahısı və fakültə məsulları hələ dəqiqləşdirilməyib. Sədr barədə ayrıca 22 sentyabr yeniləməsində Rəşad Əliyev yazılıb. 4, 8, 11 çıxarılıb: qəbul saatı, əlavə qeydiyyat mərhələləri və hüquq/öhdəlik/aktivlik tələbləri üzrə əlavə fakt yoxdur. 12-ci Bəli cavabı üzvlükdən ayrılıb yenidən qoşulmanın mümkünlüyüdür. 22: TEC–TGT fərqi məlumdur, amma birgə fəaliyyətlər və eyni vaxtda hər ikisinə üzvlük şərtləri cavabsızdır. 25, 28, 37, 40 boşdur: sənəd proseduru, bütün ixtisas kodları/dilləri/formaları/müddətləri, cari yataqxana qiymət və müraciət qaydaları, karyera müraciət prosesi üzrə çatışmayan detalları uydurma.
 `;

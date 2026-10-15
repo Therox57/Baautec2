@@ -2,7 +2,12 @@
 import {createHash,randomUUID} from 'node:crypto';
 import { HttpError, type ChatMessage } from './security.js';
 export function isLocalPreviewConfigured(): boolean {
- return process.env.TECGPT_PROVIDER !== 'openrouter' && process.env.VERCEL_ENV === 'preview' && !!process.env.TECGPT_LOCAL_URL && !!process.env.TECGPT_LOCAL_BRIDGE_KEY;
+ const ready = !!process.env.TECGPT_LOCAL_URL && !!process.env.TECGPT_LOCAL_BRIDGE_KEY;
+ if (process.env.TECGPT_PROVIDER === 'local') {
+  if (!ready) throw new HttpError(503, 'Yerli TECGPT bağlantısı hazır deyil.');
+  return true;
+ }
+ return process.env.TECGPT_PROVIDER !== 'openrouter' && process.env.VERCEL_ENV === 'preview' && ready;
 }
 export function localJobId(req: {body?: unknown}): string | undefined {
  let body=req.body;

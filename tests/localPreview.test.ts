@@ -25,3 +25,17 @@ test('local 9B remains preview-only even when production has local credentials',
   await assert.rejects(()=>answerWithLocalPreview(messages,async()=>Response.json({reply:'x',model:'groq'})),e=>e instanceof HttpError&&e.status===503);
  }finally{for(const n of names){if(previous[n]===undefined)delete process.env[n];else process.env[n]=previous[n];}}
 });
+
+
+test('explicit local selection works in production while incomplete local configuration fails closed', () => {
+ const keys=['TECGPT_PROVIDER','VERCEL_ENV','TECGPT_LOCAL_URL','TECGPT_LOCAL_BRIDGE_KEY'];
+ const saved=Object.fromEntries(keys.map(key=>[key,process.env[key]]));
+ try {
+  Object.assign(process.env,{TECGPT_PROVIDER:'local',VERCEL_ENV:'production',TECGPT_LOCAL_URL:'https://example.trycloudflare.com',TECGPT_LOCAL_BRIDGE_KEY:'test-only'});
+  assert.equal(isLocalPreviewConfigured(),true);
+  delete process.env.TECGPT_LOCAL_BRIDGE_KEY;
+  assert.throws(()=>isLocalPreviewConfigured(),e=>e instanceof HttpError&&e.status===503);
+  process.env.TECGPT_PROVIDER='openrouter';
+  assert.equal(isLocalPreviewConfigured(),false);
+ } finally {for(const key of keys)if(saved[key]===undefined)delete process.env[key];else process.env[key]=saved[key];}
+});
